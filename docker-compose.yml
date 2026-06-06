@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    ports:
+      - "9292:9292"
+    environment:
+      - RACK_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

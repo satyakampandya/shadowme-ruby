@@ -1,0 +1,10 @@
+/.bundle/
+/vendor/bundle/
+/log/*.log
+/tmp/
+/coverage/
+/pkg/
+*.gem
+.env
+.DS_Store
+.idea/

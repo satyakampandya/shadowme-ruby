@@ -1,0 +1,23 @@
+# Ignore git configuration and documentation
+.git
+.gitignore
+.dockerignore
+README.md
+AGENTS.md
+
+# Ignore local dependency bundles and ruby environments
+.bundle/
+vendor/bundle/
+Gemfile.lock
+/tmp/
+/log/
+*.gem
+
+# Ignore local configuration and secrets
+.env
+.DS_Store
+.idea/
+
+# Ignore test suite inside production image
+test/
+Rakefile

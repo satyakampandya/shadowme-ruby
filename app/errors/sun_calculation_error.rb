@@ -1,0 +1,1 @@
+class SunCalculationError < StandardError; end

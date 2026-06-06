@@ -1,0 +1,1 @@
+class GoogleApiError < StandardError; end
