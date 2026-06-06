@@ -17,4 +17,5 @@ group :development, :test do
   gem 'minitest-reporters'
   gem 'rack-test'
   gem 'webmock'
+  gem 'rackup'
 end
