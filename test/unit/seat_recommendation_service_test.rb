@@ -48,7 +48,7 @@ class SeatRecommendationServiceTest < Minitest::Test
     assert_equal "either", rec.recommended_side
     assert_equal 0, rec.left_exposure_minutes
     assert_equal 0, rec.right_exposure_minutes
-    assert_equal "low", rec.confidence
+    assert_equal "high", rec.confidence
     assert_equal "It is night time, enjoy your journey!", rec.message
   end
 end

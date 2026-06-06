@@ -66,7 +66,7 @@ POST /api/v1/recommendation
   "recommended_side": "either",
   "left_exposure_minutes": 0,
   "right_exposure_minutes": 0,
-  "confidence": "low",
+  "confidence": "high",
   "message": "It is night time, enjoy your journey!"
 }
 ```
