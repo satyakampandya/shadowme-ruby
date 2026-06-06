@@ -66,6 +66,7 @@ class App < Roda
     begin
       # 1. Health check endpoint (GET /health)
       r.get 'health' do
+        response.status = 200
         response['Content-Type'] = 'application/json'
         Oj.dump({ status: 'ok' }, mode: :compat)
       end
@@ -90,6 +91,19 @@ class App < Roda
 
       # Dispatch to branches (e.g. hash_branch('api'))
       r.hash_branches
+    rescue => e
+      @error = e.message
+      response.status = case e
+                        when ValidationError
+                          400
+                        when InvalidRouteError
+                          422
+                        when GoogleApiError
+                          502
+                        else
+                          500
+                        end
+      raise e
     ensure
       # Structured JSON Logging
       duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - @start_time) * 1000.0).round
@@ -98,7 +112,7 @@ class App < Roda
         request_id: @request_id,
         path: r.path,
         verb: r.request_method,
-        status: response.status,
+        status: response.status || 404,
         duration_ms: duration_ms,
         cache_hit: @cache_hit
       }

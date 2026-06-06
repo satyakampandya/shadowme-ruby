@@ -34,6 +34,7 @@ class App
 
           if cached
             @cache_hit = true
+            response.status = 200
             response['Content-Type'] = 'application/json'
             r.halt(200, Oj.dump(cached, mode: :compat))
           end
@@ -59,6 +60,7 @@ class App
             recommendation_hash: result_hash
           )
 
+          response.status = 200
           response['Content-Type'] = 'application/json'
           Oj.dump(result_hash, mode: :compat)
         end
