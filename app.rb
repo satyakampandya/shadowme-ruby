@@ -4,6 +4,7 @@ Bundler.require(:default, ENV['RACK_ENV'] || :development)
 require 'securerandom'
 require 'zeitwerk'
 require 'oj'
+require 'rack/auth/basic'
 
 # Setup Zeitwerk autoloader to load the core parts of the application
 loader = Zeitwerk::Loader.new
@@ -87,6 +88,20 @@ class App < Roda
             google_api: google_api_ok ? 'configured' : 'missing'
           }
         }, mode: :compat)
+      end
+
+      # 3. Admin UI (GET /admin)
+      r.get 'admin' do
+        auth = Rack::Auth::Basic::Request.new(r.env)
+        if auth.provided? && auth.basic? && auth.credentials == ['admin', ENV['ADMIN_PASSWORD'] || 'admin123']
+          response.status = 200
+          response['Content-Type'] = 'text/html; charset=utf-8'
+          AdminView.render(api_key: ENV['GOOGLE_MAPS_API_KEY'] || 'test-api-key')
+        else
+          response.status = 401
+          response['WWW-Authenticate'] = 'Basic realm="ShadowMe Admin UI"'
+          r.halt(401, 'Unauthorized')
+        end
       end
 
       # Dispatch to branches (e.g. hash_branch('api'))

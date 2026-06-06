@@ -36,6 +36,7 @@ class App
             @cache_hit = true
             response.status = 200
             response['Content-Type'] = 'application/json'
+            response['X-Cache'] = 'HIT'
             r.halt(200, Oj.dump(cached, mode: :compat))
           end
 
@@ -62,6 +63,7 @@ class App
 
           response.status = 200
           response['Content-Type'] = 'application/json'
+          response['X-Cache'] = 'MISS'
           Oj.dump(result_hash, mode: :compat)
         end
       end
