@@ -195,6 +195,19 @@
         margin-top: 2rem;
         padding-top: 1rem;
       }
+
+      .exposure-labels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+      .exposure-labels span {
+        text-align: left;
+      }
+      .exposure-labels span.lbl-front-behind,
+      .exposure-labels span.lbl-neutral {
+        text-align: right;
+      }
     }
 
     @media (max-width: 400px) {
@@ -910,6 +923,14 @@
       transform: scale(1.2);
       animation: checkpoint-pulse 1.5s infinite;
       z-index: 1000;
+    }
+    .checkpoint-marker.hovered {
+      width: 20px !important;
+      height: 20px !important;
+      border-width: 2.5px !important;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.9) !important;
+      transform: scale(1.2);
+      z-index: 1001;
     }
     @keyframes checkpoint-pulse {
       0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
@@ -1763,6 +1784,7 @@
           const infoWindow = new google.maps.InfoWindow({
             content: contentString
           });
+          marker.infoWindow = infoWindow;
 
           marker.addListener('mouseover', () => {
             if (activeInfoWindow) activeInfoWindow.close();
@@ -1824,6 +1846,44 @@
 
           item.addEventListener('click', () => {
             selectCheckpoint(index, true);
+          });
+
+          item.addEventListener('mouseenter', () => {
+            const marker = midpointMarkers[index];
+            if (marker && marker.content) {
+              marker.content.classList.add('hovered');
+              marker.zIndex = 1001;
+              if (simCurrentIndex !== index) {
+                if (activeInfoWindow) activeInfoWindow.close();
+                if (marker.infoWindow) {
+                  marker.infoWindow.open(map, marker);
+                  activeInfoWindow = marker.infoWindow;
+                }
+              }
+            }
+          });
+
+          item.addEventListener('mouseleave', () => {
+            const marker = midpointMarkers[index];
+            if (marker && marker.content) {
+              marker.content.classList.remove('hovered');
+              marker.zIndex = index;
+              if (simCurrentIndex !== index) {
+                if (marker.infoWindow) {
+                  marker.infoWindow.close();
+                }
+                if (activeInfoWindow === marker.infoWindow) activeInfoWindow = null;
+                
+                // Restore info window of currently selected checkpoint, if any
+                if (simCurrentIndex !== null && midpointMarkers[simCurrentIndex]) {
+                  const activeMarker = midpointMarkers[simCurrentIndex];
+                  if (activeMarker.infoWindow) {
+                    activeMarker.infoWindow.open(map, activeMarker);
+                    activeInfoWindow = activeMarker.infoWindow;
+                  }
+                }
+              }
+            }
           });
 
           timelineList.appendChild(item);
@@ -2091,12 +2151,16 @@
           </div>
         `;
         
-        const infoWindow = new google.maps.InfoWindow({
-          content: contentString
-        });
+        if (!marker.infoWindow) {
+          marker.infoWindow = new google.maps.InfoWindow({
+            content: contentString
+          });
+        } else {
+          marker.infoWindow.setContent(contentString);
+        }
         
-        infoWindow.open(map, marker);
-        activeInfoWindow = infoWindow;
+        marker.infoWindow.open(map, marker);
+        activeInfoWindow = marker.infoWindow;
         
         if (pan) {
           map.panTo(marker.position);
