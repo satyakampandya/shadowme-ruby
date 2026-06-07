@@ -2,7 +2,7 @@
 
 ## General Agent Rules
 
-* **Commit Constraints**: Never try to auto-commit anything after a task completion on your own. Only commit when explicitly asked by the user.
+* **Commit Constraints**: Never auto-commit anything, and never suggest, offer, or ask to commit changes. The user will explicitly state when a commit is needed.
 
 ## Objective
 
