@@ -28,6 +28,7 @@ class TripAnalyzerService
       left_exposure_seconds: exposure[:left_exposure_seconds],
       right_exposure_seconds: exposure[:right_exposure_seconds],
       night_exposure_seconds: exposure[:night_exposure_seconds],
+      front_behind_exposure_seconds: exposure[:front_behind_exposure_seconds],
       is_entirely_night: exposure[:is_entirely_night],
       steps: exposure[:steps],
       route_index: trip_request.route_index

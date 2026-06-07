@@ -48,6 +48,7 @@ class RouteAnalyzerService
     left_exposure_seconds = 0
     right_exposure_seconds = 0
     night_exposure_seconds = 0
+    front_behind_exposure_seconds = 0
     accumulated_duration_seconds = 0
     night_steps_count = 0
     steps_details = []
@@ -69,6 +70,8 @@ class RouteAnalyzerService
           left_exposure_seconds += step.duration
         when :right
           right_exposure_seconds += step.duration
+        when :front, :behind
+          front_behind_exposure_seconds += step.duration
         end
       end
 
@@ -95,6 +98,7 @@ class RouteAnalyzerService
       left_exposure_seconds: left_exposure_seconds,
       right_exposure_seconds: right_exposure_seconds,
       night_exposure_seconds: night_exposure_seconds,
+      front_behind_exposure_seconds: front_behind_exposure_seconds,
       is_entirely_night: (night_steps_count == processed_steps.size),
       steps: steps_details
     }

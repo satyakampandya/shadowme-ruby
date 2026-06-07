@@ -8,6 +8,7 @@ class RecommendationSerializer
       left_exposure_minutes: recommendation.left_exposure_minutes,
       right_exposure_minutes: recommendation.right_exposure_minutes,
       night_exposure_minutes: recommendation.respond_to?(:night_exposure_minutes) ? recommendation.night_exposure_minutes : 0,
+      front_behind_exposure_minutes: recommendation.respond_to?(:front_behind_exposure_minutes) ? recommendation.front_behind_exposure_minutes : 0,
       confidence: recommendation.confidence
     }
     hash[:message] = recommendation.message if recommendation.message

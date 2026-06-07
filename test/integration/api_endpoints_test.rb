@@ -106,6 +106,7 @@ class ApiEndpointsTest < Minitest::Test
     assert_includes ["left", "right"], body[:recommended_side]
     assert_kind_of Integer, body[:left_exposure_minutes]
     assert_kind_of Integer, body[:right_exposure_minutes]
+    assert_kind_of Integer, body[:front_behind_exposure_minutes]
     assert_includes ["low", "medium", "high"], body[:confidence]
     assert_equal "You should sit on the #{body[:recommended_side]} side of the vehicle to minimize direct sunlight exposure.", body[:message]
     

@@ -373,6 +373,11 @@
       font-weight: 600;
     }
 
+    .lbl-front-behind {
+      color: #eab308;
+      font-weight: 600;
+    }
+
     .exposure-bar-container {
       width: 100%;
       height: 10px;
@@ -391,6 +396,13 @@
     .bar-right {
       height: 100%;
       background-color: #ec4899;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-front-behind {
+      height: 100%;
+      background-color: #eab308;
+      width: 0%;
       transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -1062,13 +1074,15 @@
         <div class="exposure-breakdown">
           <div class="exposure-labels">
             <span class="lbl-left" id="exposure-lbl-left">Left: 0m</span>
-            <span class="lbl-neutral" id="exposure-lbl-neutral" style="color: #10b981; font-weight: 600;">Night: 0m</span>
+            <span class="lbl-front-behind" id="exposure-lbl-front-behind">Front/Behind: 0m</span>
             <span class="lbl-right" id="exposure-lbl-right">Right: 0m</span>
+            <span class="lbl-neutral" id="exposure-lbl-neutral" style="color: #10b981; font-weight: 600;">Night: 0m</span>
           </div>
           <div class="exposure-bar-container">
             <div class="bar-left" id="bar-left" style="width: 0%"></div>
-            <div class="bar-neutral" id="bar-neutral" style="width: 0%"></div>
+            <div class="bar-front-behind" id="bar-front-behind" style="width: 0%"></div>
             <div class="bar-right" id="bar-right" style="width: 0%"></div>
+            <div class="bar-neutral" id="bar-neutral" style="width: 0%"></div>
           </div>
         </div>
 
@@ -1836,24 +1850,29 @@
       const leftMin = data.left_exposure_minutes || 0;
       const rightMin = data.right_exposure_minutes || 0;
       const nightMin = data.night_exposure_minutes || 0;
+      const frontBehindMin = data.front_behind_exposure_minutes || 0;
       
       document.getElementById('exposure-lbl-left').textContent = `Left: ${formatDuration(leftMin)}`;
-      document.getElementById('exposure-lbl-neutral').textContent = `Night: ${formatDuration(nightMin)}`;
+      document.getElementById('exposure-lbl-front-behind').textContent = `Front/Behind: ${formatDuration(frontBehindMin)}`;
       document.getElementById('exposure-lbl-right').textContent = `Right: ${formatDuration(rightMin)}`;
+      document.getElementById('exposure-lbl-neutral').textContent = `Night: ${formatDuration(nightMin)}`;
 
       const barLeft = document.getElementById('bar-left');
       const barRight = document.getElementById('bar-right');
       const barNeutral = document.getElementById('bar-neutral');
+      const barFrontBehind = document.getElementById('bar-front-behind');
 
-      const total = leftMin + rightMin + nightMin;
+      const total = leftMin + rightMin + nightMin + frontBehindMin;
       if (total === 0) {
         barLeft.style.width = '0%';
         barRight.style.width = '0%';
+        barFrontBehind.style.width = '0%';
         barNeutral.style.width = '100%';
       } else {
         barLeft.style.width = `${(leftMin / total) * 100}%`;
-        barNeutral.style.width = `${(nightMin / total) * 100}%`;
+        barFrontBehind.style.width = `${(frontBehindMin / total) * 100}%`;
         barRight.style.width = `${(rightMin / total) * 100}%`;
+        barNeutral.style.width = `${(nightMin / total) * 100}%`;
       }
 
       // Update confidence

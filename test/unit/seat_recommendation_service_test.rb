@@ -73,4 +73,22 @@ class SeatRecommendationServiceTest < Minitest::Test
     assert_equal "high", rec.confidence
     assert_equal "You should sit on the left side of the vehicle to minimize direct sunlight exposure.", rec.message
   end
+
+  def test_handles_front_behind_exposure
+    rec = SeatRecommendationService.recommend(
+      left_exposure_seconds: 900,
+      right_exposure_seconds: 2700,
+      night_exposure_seconds: 1800,
+      front_behind_exposure_seconds: 1200,
+      is_entirely_night: false
+    )
+
+    assert_equal "left", rec.recommended_side
+    assert_equal 15, rec.left_exposure_minutes
+    assert_equal 45, rec.right_exposure_minutes
+    assert_equal 30, rec.night_exposure_minutes
+    assert_equal 20, rec.front_behind_exposure_minutes
+    assert_equal "high", rec.confidence
+    assert_equal "You should sit on the left side of the vehicle to minimize direct sunlight exposure.", rec.message
+  end
 end
