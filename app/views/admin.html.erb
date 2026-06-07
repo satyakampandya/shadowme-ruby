@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -75,22 +76,29 @@
       width: 100%;
       max-width: 1200px;
       display: grid;
-      grid-template-columns: 460px 1fr;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr;
       gap: 2rem;
       align-items: stretch;
       flex: 1;
     }
 
-    @media (max-width: 1024px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
+    .form-card {
+      grid-column: 1 / span 2;
+      grid-row: 1;
     }
 
-    .left-column {
+    .result-panel {
+      grid-column: 1;
+      grid-row: 2;
+      align-self: stretch;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+      min-height: 600px;
+      height: 100%;
     }
 
     .card {
@@ -103,19 +111,96 @@
     }
 
     .map-card {
+      grid-column: 2;
+      grid-row: 2;
       display: flex;
       flex-direction: column;
       padding: 0;
       overflow: hidden;
       min-height: 600px;
       height: 100%;
+      align-self: stretch;
     }
 
     #map {
       width: 100%;
       height: 100%;
-      min-height: 600px;
+      min-height: 100%;
       background-color: #0f172a;
+    }
+
+    /* Media queries for responsiveness */
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 1.5rem;
+        align-items: stretch;
+      }
+
+      .form-card {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .result-panel {
+        grid-column: 1;
+        grid-row: 2;
+        min-height: auto;
+        align-self: auto;
+      }
+
+      .map-card {
+        grid-column: 1;
+        grid-row: 3;
+        min-height: 450px;
+        height: 450px;
+        align-self: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem 0.75rem;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .header-title h1 {
+        font-size: 1.75rem;
+      }
+
+      .dev-profile-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .card {
+        padding: 1.25rem;
+        border-radius: 12px;
+      }
+
+      .btn-swap {
+        width: 38px;
+        height: 38px;
+        right: 0.75rem;
+      }
+
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .form-group {
@@ -201,17 +286,13 @@
     }
 
     /* Result Panel Styling */
-    .result-panel {
-      min-height: 250px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-
     .placeholder-state {
       color: var(--text-muted);
+      margin: auto;
+    }
+
+    #loading-state {
+      margin: auto;
     }
 
     .placeholder-icon {
@@ -543,6 +624,354 @@
     .dev-profile-btn:hover svg {
       color: var(--accent-primary);
     }
+
+
+    
+    /* Skeleton Loaders */
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #151d30 25%, #222f4c 50%, #151d30 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+    }
+    .skeleton-badge {
+      width: 140px;
+      height: 36px;
+      border-radius: 18px;
+      margin: 0 auto 1.5rem;
+    }
+    .skeleton-text {
+      width: 90%;
+      height: 16px;
+      margin: 0 auto 0.75rem;
+    }
+    .skeleton-text-short {
+      width: 60%;
+      height: 16px;
+      margin: 0 auto 1.75rem;
+    }
+    .skeleton-bar {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .skeleton-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      width: 100%;
+    }
+    .skeleton-grid-item {
+      height: 60px;
+      border-radius: 8px;
+    }
+    
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+    }
+    .toast-container.active {
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-color);
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      pointer-events: auto;
+      font-size: 0.9rem;
+      min-width: 300px;
+      max-width: 450px;
+      border-left: 4px solid var(--accent-primary);
+    }
+    .toast.success { border-left-color: var(--success-color); }
+    .toast.error { border-left-color: #ef4444; }
+    .toast-icon { display: flex; align-items: center; justify-content: center; }
+    .toast.success .toast-icon { color: var(--success-color); }
+    .toast.error .toast-icon { color: #ef4444; }
+    .toast-message { flex: 1; text-align: left; }
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.15rem;
+      border-radius: 4px;
+    }
+    .toast-close:hover {
+      color: var(--text-color);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Interactive Timeline */
+    .timeline-container {
+      display: none;
+      margin-top: 1.75rem;
+      text-align: left;
+      border-top: 1px solid var(--card-border);
+      padding-top: 1.25rem;
+      width: 100%;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+    .btn-play-sim {
+      background-color: var(--input-bg);
+      border: 1px solid var(--accent-primary);
+      color: var(--accent-primary);
+      border-radius: 20px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s ease;
+    }
+    .btn-play-sim:hover {
+      background-color: var(--accent-primary);
+      color: white;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    }
+    .btn-play-sim.active {
+      background-color: #ef4444;
+      border-color: #ef4444;
+      color: white;
+    }
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+      margin-top: 0.75rem;
+    }
+    .timeline-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .timeline-list::-webkit-scrollbar-track {
+      background: var(--input-bg);
+      border-radius: 3px;
+    }
+    .timeline-list::-webkit-scrollbar-thumb {
+      background: var(--card-border);
+      border-radius: 3px;
+    }
+    .timeline-list::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-primary);
+    }
+    .timeline-item {
+      background-color: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      text-align: left;
+    }
+    .timeline-item:hover {
+      border-color: var(--accent-primary);
+      background-color: rgba(99, 102, 241, 0.02);
+    }
+    .timeline-item.active {
+      border-color: var(--accent-primary);
+      background-color: rgba(99, 102, 241, 0.08);
+      box-shadow: 0 0 0 1px var(--accent-primary);
+    }
+    .timeline-item-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .timeline-item-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+    .timeline-item-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .timeline-item-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .timeline-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .timeline-badge.left { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .timeline-badge.right { background-color: rgba(236, 72, 153, 0.15); color: #f472b6; }
+    .timeline-badge.front, .timeline-badge.behind { background-color: rgba(234, 179, 8, 0.15); color: #facc15; }
+    .timeline-badge.night { background-color: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+    
+    /* Floating Map Legend */
+    .map-legend {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      background-color: rgba(21, 29, 48, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+    }
+    .legend-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.15rem;
+      text-align: left;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-color);
+    }
+    .legend-color {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid #ffffff;
+    }
+    .legend-color.left { background-color: #3b82f6; }
+    .legend-color.right { background-color: #ec4899; }
+    .legend-color.neutral { background-color: #eab308; }
+    .legend-color.night { background-color: #9ca3af; }
+
+    /* Custom Checkpoint Markers styling on Map */
+    .checkpoint-marker {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1.5px solid #ffffff;
+      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .checkpoint-marker.active {
+      width: 20px !important;
+      height: 20px !important;
+      border-width: 2.5px !important;
+      box-shadow: 0 0 12px var(--accent-primary) !important;
+      transform: scale(1.2);
+      animation: checkpoint-pulse 1.5s infinite;
+      z-index: 1000;
+    }
+    @keyframes checkpoint-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+
+    /* Horizontal form layout on desktop viewports */
+    @media (min-width: 1025px) {
+      #recommendation-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 180px;
+        gap: 1.5rem;
+        align-items: end;
+      }
+
+      #recommendation-form > div:nth-of-type(1) {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      #recommendation-form > div:nth-of-type(2) {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      #recommendation-form > div:nth-of-type(3) {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      #recommendation-form button.btn-submit {
+        grid-column: 4;
+        grid-row: 1;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0;
+      }
+
+      #recommendation-form .form-group {
+        margin-bottom: 0;
+        position: relative;
+      }
+
+      .btn-swap {
+        position: absolute;
+        left: -0.75rem;
+        top: 2.65rem;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        z-index: 10;
+      }
+
+      .btn-swap:hover {
+        transform: translate(-50%, -50%) rotate(180deg);
+      }
+
+      .btn-swap:active {
+        transform: translate(-50%, -50%) rotate(180deg) scale(0.95);
+      }
+
+      .coords-indicator {
+        position: absolute;
+        bottom: -1.35rem;
+        left: 0;
+        margin-top: 0;
+        white-space: nowrap;
+      }
+
+      #route-options-group {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-top: 1.5rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -559,93 +988,152 @@
   </header>
 
   <div class="container">
-    <div class="left-column">
-      <!-- Card 1: Form Inputs -->
-      <div class="card">
-        <form id="recommendation-form" onsubmit="event.preventDefault(); submitForm();">
-          <div class="form-group">
-            <label for="source-input">Source Location</label>
-            <input type="text" id="source-input" placeholder="Search origin location..." required autocomplete="off">
-            <input type="hidden" id="source-coords">
-            <span id="source-coords-lbl" class="coords-indicator">Coordinates: 0.000, 0.000</span>
-          </div>
-
-          <div class="form-group">
-            <button type="button" class="btn-swap" onclick="swapLocations();" title="Swap Source and Destination">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 21 7 17 3"></polyline><line x1="21" y1="7" x2="9" y2="7"></line><polyline points="7 13 3 17 7 21"></polyline><line x1="3" y1="17" x2="15" y2="17"></line></svg>
-            </button>
-            <label for="dest-input">Destination Location</label>
-            <input type="text" id="dest-input" placeholder="Search destination location..." required autocomplete="off">
-            <input type="hidden" id="dest-coords">
-            <span id="dest-coords-lbl" class="coords-indicator">Coordinates: 0.000, 0.000</span>
-          </div>
-
-          <div class="form-group">
-            <label for="departure-input">Departure Date & Time</label>
-            <input type="text" id="departure-input" placeholder="Select Departure Date & Time..." required>
-          </div>
-
-          <div class="form-group" id="route-options-group" style="display: none;">
-            <label>Select Route Option</label>
-            <div id="route-options-list" class="route-options-list"></div>
-          </div>
-
-          <button type="submit" id="submit-btn" class="btn-submit" disabled>
-            <span id="btn-text">ShadowMe</span>
-            <div id="btn-spinner" class="spinner"></div>
-          </button>
-        </form>
-      </div>
-
-      <!-- Card 2: Results Display -->
-      <div class="card result-panel" id="result-panel">
-        <div id="placeholder-state" class="placeholder-state">
-          <div class="placeholder-icon">☀️</div>
-          <h3>Recommendation Insights</h3>
-          <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.85rem; padding: 0 1rem;">
-            Submit your journey to view the recommended side of the vehicle and direct sunlight exposure times.
-          </p>
+    <!-- Card 1: Form Inputs -->
+    <div class="card form-card">
+      <form id="recommendation-form" onsubmit="event.preventDefault(); submitForm();">
+        <div class="form-group">
+          <label for="source-input">Source Location</label>
+          <input type="text" id="source-input" placeholder="Search origin location..." required autocomplete="off">
+          <input type="hidden" id="source-coords">
+          <span id="source-coords-lbl" class="coords-indicator">Coordinates: 0.000, 0.000</span>
         </div>
 
-        <div id="result-content" class="result-content">
-          <div id="badge-container">
-            <span class="recommendation-badge left" id="recommended-side-badge">Left Side</span>
-          </div>
-          
-          <p class="result-message" id="result-message">
-            You should sit on the left side of the vehicle to minimize direct sunlight exposure.
-          </p>
+        <div class="form-group">
+          <button type="button" class="btn-swap" onclick="swapLocations();" title="Swap Source and Destination">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 21 7 17 3"></polyline><line x1="21" y1="7" x2="9" y2="7"></line><polyline points="7 13 3 17 7 21"></polyline><line x1="3" y1="17" x2="15" y2="17"></line></svg>
+          </button>
+          <label for="dest-input">Destination Location</label>
+          <input type="text" id="dest-input" placeholder="Search destination location..." required autocomplete="off">
+          <input type="hidden" id="dest-coords">
+          <span id="dest-coords-lbl" class="coords-indicator">Coordinates: 0.000, 0.000</span>
+        </div>
 
-          <div class="exposure-breakdown">
-            <div class="exposure-labels">
-              <span class="lbl-left" id="exposure-lbl-left">Left: 0m</span>
-              <span class="lbl-neutral" id="exposure-lbl-neutral" style="color: #10b981; font-weight: 600;">Night: 0m</span>
-              <span class="lbl-right" id="exposure-lbl-right">Right: 0m</span>
-            </div>
-            <div class="exposure-bar-container">
-              <div class="bar-left" id="bar-left" style="width: 0%"></div>
-              <div class="bar-neutral" id="bar-neutral" style="width: 0%"></div>
-              <div class="bar-right" id="bar-right" style="width: 0%"></div>
-            </div>
-          </div>
+        <div class="form-group">
+          <label for="departure-input">Departure Date & Time</label>
+          <input type="text" id="departure-input" placeholder="Select Departure Date & Time..." required>
+        </div>
 
-          <div class="details-grid">
-            <div class="detail-card">
-              <label>Confidence</label>
-              <div class="detail-val" id="confidence-val">High</div>
-            </div>
-            <div class="detail-card">
-              <label>Cache Status</label>
-              <div class="detail-val" id="cache-val">Miss</div>
+        <div class="form-group" id="route-options-group" style="display: none;">
+          <label>Select Route Option</label>
+          <div id="route-options-list" class="route-options-list"></div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-submit" disabled>
+          <span id="btn-text">ShadowMe</span>
+          <div id="btn-spinner" class="spinner"></div>
+        </button>
+      </form>
+    </div>
+
+    <!-- Card 2: Results Display -->
+    <!-- Card 2: Results Display -->
+    <div class="card result-panel" id="result-panel">
+      <!-- Placeholder State -->
+      <div id="placeholder-state" class="placeholder-state">
+        <div class="placeholder-icon">☀️</div>
+        <h3>Recommendation Insights</h3>
+        <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.85rem; padding: 0 1rem;">
+          Submit your journey to view the recommended side of the vehicle and direct sunlight exposure times.
+        </p>
+      </div>
+
+      <!-- Loading State (Skeleton) -->
+      <div id="loading-state" style="display: none; width: 100%;">
+        <div class="skeleton skeleton-badge"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text-short"></div>
+        <div class="skeleton skeleton-bar"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton skeleton-grid-item"></div>
+          <div class="skeleton skeleton-grid-item"></div>
+        </div>
+      </div>
+
+      <!-- Result Content -->
+      <div id="result-content" class="result-content">
+        <div id="badge-container">
+          <span class="recommendation-badge left" id="recommended-side-badge">Left Side</span>
+        </div>
+        
+        <p class="result-message" id="result-message">
+          You should sit on the left side of the vehicle to minimize direct sunlight exposure.
+        </p>
+
+        <div class="exposure-breakdown">
+          <div class="exposure-labels">
+            <span class="lbl-left" id="exposure-lbl-left">Left: 0m</span>
+            <span class="lbl-neutral" id="exposure-lbl-neutral" style="color: #10b981; font-weight: 600;">Night: 0m</span>
+            <span class="lbl-right" id="exposure-lbl-right">Right: 0m</span>
+          </div>
+          <div class="exposure-bar-container">
+            <div class="bar-left" id="bar-left" style="width: 0%"></div>
+            <div class="bar-neutral" id="bar-neutral" style="width: 0%"></div>
+            <div class="bar-right" id="bar-right" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-card">
+            <label>Confidence</label>
+            <div class="detail-val" id="confidence-val">High</div>
+          </div>
+          <div class="detail-card">
+            <label>Cache Status</label>
+            <div class="detail-val" id="cache-val">Miss</div>
+          </div>
+        </div>
+
+        <!-- Interactive Checkpoint Timeline -->
+        <div class="timeline-container" id="timeline-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+              <i data-lucide="route" style="width: 16px; height: 16px; color: var(--accent-primary);"></i> Route Timeline
+            </h4>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div class="sim-speed-control" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
+                <span>Speed:</span>
+                <select id="sim-speed-select" onchange="updateSimulationSpeed();" style="background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 6px; color: var(--text-color); font-size: 0.75rem; padding: 0.2rem 0.4rem; cursor: pointer; outline: none; transition: border-color 0.2s ease;">
+                  <option value="0.5">0.5x</option>
+                  <option value="1" selected>1x</option>
+                  <option value="2">2x</option>
+                  <option value="5">5x</option>
+                  <option value="10">10x</option>
+                </select>
+              </div>
+              <button type="button" id="play-sim-btn" class="btn-play-sim" onclick="toggleSimulation();" title="Play Simulation" style="padding: 0.35rem; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; min-width: 28px;">
+                <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+              </button>
             </div>
           </div>
+          <div id="timeline-list" class="timeline-list"></div>
         </div>
       </div>
     </div>
 
-    <!-- Right Column: Interactive Map -->
-    <div class="card map-card">
+    <!-- Card 3: Interactive Map -->
+    <div class="card map-card" style="position: relative;">
       <div id="map"></div>
+      
+      <!-- Floating Map Legend -->
+      <div class="map-legend">
+        <div class="legend-title">Checkpoints</div>
+        <div class="legend-item">
+          <span class="legend-color left"></span>
+          <span>Sun on Left Side</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color right"></span>
+          <span>Sun on Right Side</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color neutral"></span>
+          <span>Sun Front / Behind</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color night"></span>
+          <span>Night Time</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -670,15 +1158,102 @@
     let routePolyline = null;
     let midpointMarkers = [];
     let sunRayLines = [];
+    let startMarker = null;
+    let endMarker = null;
+
+    // Simulation & Timeline Global Variables
+    let currentStepsData = [];
+    let activeInfoWindow = null;
+    let simulationInterval = null;
+    let simCurrentIndex = 0;
+
+    const darkMapStyle = [
+      { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }, { weight: 2 }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+      {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#cbd5e1" }]
+      },
+      {
+        featureType: "poi",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#94a3b8" }]
+      },
+      {
+        featureType: "poi.park",
+        elementType: "geometry",
+        stylers: [{ color: "#1e293b" }]
+      },
+      {
+        featureType: "poi.park",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#64748b" }]
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#1e293b" }]
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#0f172a" }]
+      },
+      {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#475569" }]
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry",
+        stylers: [{ color: "#334155" }]
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#0f172a" }]
+      },
+      {
+        featureType: "road.highway",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#cbd5e1" }]
+      },
+      {
+        featureType: "transit",
+        elementType: "geometry",
+        stylers: [{ color: "#1e293b" }]
+      },
+      {
+        featureType: "transit.station",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#94a3b8" }]
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#0b0f19" }]
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#475569" }]
+      },
+      {
+        featureType: "water",
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#0f172a" }]
+      }
+    ];
 
     // Google Maps Initialization Callback
     function initMap() {
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressPolylines: true, // Suppress default route renderer to draw exact step coordinates
-        markerOptions: {
-          animation: google.maps.Animation.DROP
-        }
+        suppressPolylines: true,
+        suppressMarkers: true
       });
 
       // Default view centered on India/Gujarat region
@@ -688,7 +1263,8 @@
         center: defaultCenter,
         disableDefaultUI: true,
         zoomControl: true,
-        mapId: 'DEMO_MAP_ID'
+        mapId: 'DEMO_MAP_ID',
+        styles: darkMapStyle
       });
 
       directionsRenderer.setMap(map);
@@ -833,9 +1409,15 @@
               console.log("[ShadowMe] Directions request succeeded. Total routes found:", result.routes ? result.routes.length : 0);
               
               // Ensure we show polylines during selection
-              directionsRenderer.setOptions({ suppressPolylines: false });
+              directionsRenderer.setOptions({ suppressPolylines: false, suppressMarkers: true });
               directionsRenderer.setDirections(result);
               directionsRenderer.setRouteIndex(0);
+
+              // Draw custom start/end markers for the first route
+              if (result.routes && result.routes[0]) {
+                const leg = result.routes[0].legs[0];
+                drawStartEndMarkers(leg.start_location, leg.end_location, leg.start_address, leg.end_address);
+              }
 
               // Render alternative routes selection in UI
               const optionsGroup = document.getElementById('route-options-group');
@@ -861,7 +1443,7 @@
 
                   item.addEventListener('click', () => {
                     currentRouteIndex = idx;
-                    directionsRenderer.setOptions({ suppressPolylines: false });
+                    directionsRenderer.setOptions({ suppressPolylines: false, suppressMarkers: true });
                     directionsRenderer.setRouteIndex(idx);
                     
                     // Highlight selected item
@@ -871,6 +1453,10 @@
 
                     // Redraw preview polyline
                     drawRoutePolyline(route.overview_path);
+
+                    // Redraw custom start/end markers
+                    const selectedLeg = route.legs[0];
+                    drawStartEndMarkers(selectedLeg.start_location, selectedLeg.end_location, selectedLeg.start_address, selectedLeg.end_address);
                   });
 
                   optionsList.appendChild(item);
@@ -960,6 +1546,11 @@
       document.getElementById('btn-spinner').style.display = 'block';
       submitBtn.disabled = true;
 
+      // Toggle loading skeleton and hide result/placeholder
+      document.getElementById('placeholder-state').style.display = 'none';
+      document.getElementById('result-content').style.display = 'none';
+      document.getElementById('loading-state').style.display = 'block';
+
       try {
         // Fetch recommendations from API
         const response = await fetch('/api/v1/recommendation', {
@@ -973,14 +1564,25 @@
         const cacheHitHeader = response.headers.get('X-Cache') === 'HIT';
         const data = await response.json();
 
+        // Hide loading state
+        document.getElementById('loading-state').style.display = 'none';
+
         if (response.ok) {
           renderResult(data, cacheHitHeader);
-          directionsRenderer.setOptions({ suppressPolylines: true });
+          directionsRenderer.setOptions({ suppressPolylines: true, suppressMarkers: true });
+          
+          // Scroll to result panel on mobile/tablet
+          if (window.innerWidth <= 1024) {
+            document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth' });
+          }
         } else {
-          alert(`Error: ${data.error || 'Failed to analyze route'}`);
+          document.getElementById('placeholder-state').style.display = 'block';
+          showToast(`Error: ${data.error || 'Failed to analyze route'}`, 'error');
         }
       } catch (err) {
-        alert(`Network Error: ${err.message}`);
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('placeholder-state').style.display = 'block';
+        showToast(`Network Error: ${err.message}`, 'error');
       } finally {
         document.getElementById('btn-text').style.display = 'block';
         document.getElementById('btn-spinner').style.display = 'none';
@@ -1017,11 +1619,15 @@
 
     function renderResult(data, isCacheHit) {
       document.getElementById('placeholder-state').style.display = 'none';
+      document.getElementById('loading-state').style.display = 'none';
       const content = document.getElementById('result-content');
       content.style.display = 'block';
 
       // Clear previous visualization elements
       clearVisualization();
+
+      // Save steps globally for simulation & timeline interaction
+      currentStepsData = data.steps || [];
 
       // Draw exact backend route polyline and checkpoints
       const steps = data.steps || [];
@@ -1041,6 +1647,15 @@
           }
         });
         drawRoutePolyline(backendPath);
+
+        // Draw custom start and end markers (S & D pins) so they remain visible
+        const firstStep = steps[0];
+        const lastStep = steps[steps.length - 1];
+        const startLatLng = new google.maps.LatLng(parseFloat(firstStep.start_lat), parseFloat(firstStep.start_lng));
+        const endLatLng = new google.maps.LatLng(parseFloat(lastStep.end_lat), parseFloat(lastStep.end_lng));
+        const startAddr = document.getElementById('source-input').value;
+        const endAddr = document.getElementById('dest-input').value;
+        drawStartEndMarkers(startLatLng, endLatLng, startAddr, endAddr);
 
         // 2. Draw checkpoints (midpoints) and sun ray direction vectors
         steps.forEach((step, index) => {
@@ -1066,12 +1681,8 @@
 
           // Create custom AdvancedMarker HTML content (circle element)
           const markerContent = document.createElement('div');
-          markerContent.style.width = '12px';
-          markerContent.style.height = '12px';
-          markerContent.style.borderRadius = '50%';
+          markerContent.className = 'checkpoint-marker';
           markerContent.style.backgroundColor = markerColor;
-          markerContent.style.border = '1.5px solid #ffffff';
-          markerContent.style.boxShadow = '0 0 4px rgba(0,0,0,0.5)';
 
           const marker = new google.maps.marker.AdvancedMarkerElement({
             position: midpointPos,
@@ -1114,13 +1725,18 @@
             }
           }
 
+          // Trigger selection on marker click
+          marker.addListener('click', () => {
+            selectCheckpoint(index, false);
+          });
+
           // Add hover popover detailing the metrics at this checkpoint
           const isNight = isNaN(sunElev) || sunElev <= 0;
           const displaySide = isNight ? 'night' : step.sun_side;
           const displayColor = isNight ? '#9ca3af' : (markerColor === "#eab308" ? "#b45309" : markerColor);
 
           const contentString = `
-            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4;">
+            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4; min-width: 165px;">
               <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
               <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
               <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
@@ -1135,13 +1751,76 @@
           });
 
           marker.addListener('mouseover', () => {
+            if (activeInfoWindow) activeInfoWindow.close();
             infoWindow.open(map, marker);
+            activeInfoWindow = infoWindow;
+            
+            // Highlight item in timeline
+            document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
+            const el = document.getElementById(`timeline-item-${index}`);
+            if (el) {
+              el.classList.add('active');
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
           });
 
           marker.addListener('mouseout', () => {
             infoWindow.close();
+            if (activeInfoWindow === infoWindow) activeInfoWindow = null;
           });
         });
+
+        // Populate timeline list
+        const timelineList = document.getElementById('timeline-list');
+        timelineList.innerHTML = '';
+
+        steps.forEach((step, index) => {
+          const item = document.createElement('div');
+          item.className = 'timeline-item';
+          item.id = `timeline-item-${index}`;
+
+          const timeStr = new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const distanceKm = (step.distance / 1000.0).toFixed(1);
+          const durationMins = Math.round(step.duration / 60.0) || 1;
+          const bearingDeg = Math.round(step.bearing);
+
+          // Find direction symbol/name
+          let dirStr = '';
+          if (bearingDeg >= 337.5 || bearingDeg < 22.5) dirStr = 'N';
+          else if (bearingDeg >= 22.5 && bearingDeg < 67.5) dirStr = 'NE';
+          else if (bearingDeg >= 67.5 && bearingDeg < 112.5) dirStr = 'E';
+          else if (bearingDeg >= 112.5 && bearingDeg < 157.5) dirStr = 'SE';
+          else if (bearingDeg >= 157.5 && bearingDeg < 202.5) dirStr = 'S';
+          else if (bearingDeg >= 202.5 && bearingDeg < 247.5) dirStr = 'SW';
+          else if (bearingDeg >= 247.5 && bearingDeg < 292.5) dirStr = 'W';
+          else dirStr = 'NW';
+
+          const isNight = parseFloat(step.sun_elevation) <= 0.0;
+          const side = isNight ? 'night' : step.sun_side;
+
+          item.innerHTML = `
+            <div class="timeline-item-left">
+              <span class="timeline-item-title">Checkpoint ${index + 1} &bull; ${timeStr}</span>
+              <span class="timeline-item-meta">${distanceKm} km &bull; ${durationMins}m &bull; Heading ${bearingDeg}° (${dirStr})</span>
+            </div>
+            <div class="timeline-item-right">
+              <span class="timeline-badge ${side}">${side}</span>
+            </div>
+          `;
+
+          item.addEventListener('click', () => {
+            selectCheckpoint(index, true);
+          });
+
+          timelineList.appendChild(item);
+        });
+
+        document.getElementById('timeline-container').style.display = 'block';
+
+        // Select the initial checkpoint (index 0) by default after the browser paint loop finishes
+        setTimeout(() => {
+          selectCheckpoint(0, false);
+        }, 50);
       }
 
       // Update badge
@@ -1185,6 +1864,11 @@
 
       // Update cache status
       document.getElementById('cache-val').textContent = isCacheHit ? 'Hit' : 'Miss';
+
+      // Initialize icons
+      if (window.lucide) {
+        lucide.createIcons();
+      }
     }
 
     // Visualization Helpers
@@ -1203,17 +1887,288 @@
     }
 
     function clearVisualization() {
+      simCurrentIndex = 0;
       if (routePolyline) {
         routePolyline.setMap(null);
         routePolyline = null;
+      }
+      if (startMarker) {
+        startMarker.setMap(null);
+        startMarker = null;
+      }
+      if (endMarker) {
+        endMarker.setMap(null);
+        endMarker = null;
       }
       midpointMarkers.forEach(m => m.setMap(null));
       midpointMarkers = [];
       sunRayLines.forEach(l => l.setMap(null));
       sunRayLines = [];
+      stopSimulation();
+      document.getElementById('timeline-container').style.display = 'none';
     }
 
-    // Set default departure time with Flatpickr
+    // Draw custom glowing Start and End markers on the map
+    function drawStartEndMarkers(startPos, endPos, startAddr, endAddr) {
+      if (startMarker) startMarker.setMap(null);
+      if (endMarker) endMarker.setMap(null);
+
+      // Custom green start marker content (S = Source)
+      const startContent = document.createElement('div');
+      startContent.style.width = '24px';
+      startContent.style.height = '24px';
+      startContent.style.borderRadius = '50%';
+      startContent.style.backgroundColor = '#10b981';
+      startContent.style.border = '2px solid #ffffff';
+      startContent.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.6)';
+      startContent.style.display = 'flex';
+      startContent.style.alignItems = 'center';
+      startContent.style.justifyContent = 'center';
+      startContent.style.color = '#ffffff';
+      startContent.style.fontSize = '12px';
+      startContent.style.fontWeight = '800';
+      startContent.style.fontFamily = "'Inter', sans-serif";
+      startContent.innerText = 'S';
+
+      startMarker = new google.maps.marker.AdvancedMarkerElement({
+        position: startPos,
+        map: map,
+        title: `Start: ${startAddr || 'Origin'}`,
+        content: startContent,
+        zIndex: 1000
+      });
+
+      // Custom pink/red end marker content (D = Destination)
+      const endContent = document.createElement('div');
+      endContent.style.width = '24px';
+      endContent.style.height = '24px';
+      endContent.style.borderRadius = '50%';
+      endContent.style.backgroundColor = '#ec4899';
+      endContent.style.border = '2px solid #ffffff';
+      endContent.style.boxShadow = '0 0 10px rgba(236, 72, 153, 0.6)';
+      endContent.style.display = 'flex';
+      endContent.style.alignItems = 'center';
+      endContent.style.justifyContent = 'center';
+      endContent.style.color = '#ffffff';
+      endContent.style.fontSize = '12px';
+      endContent.style.fontWeight = '800';
+      endContent.style.fontFamily = "'Inter', sans-serif";
+      endContent.innerText = 'D';
+
+      endMarker = new google.maps.marker.AdvancedMarkerElement({
+        position: endPos,
+        map: map,
+        title: `Destination: ${endAddr || 'Destination'}`,
+        content: endContent,
+        zIndex: 1000
+      });
+    }
+
+    // Sliding custom Toast notification system
+    function showToast(message, type = 'info') {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      let iconName = 'info';
+      if (type === 'success') iconName = 'check-circle';
+      if (type === 'error') iconName = 'alert-triangle';
+      
+      toast.innerHTML = `
+        <div class="toast-icon"><i data-lucide="${iconName}" style="width: 18px; height: 18px;"></i></div>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close" onclick="this.parentElement.remove(); checkToastContainerEmpty();"><i data-lucide="x" style="width: 14px; height: 14px;"></i></button>
+      `;
+      
+      container.appendChild(toast);
+      
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      
+      // Trigger slide-in
+      container.classList.add('active');
+      
+      // Auto dismiss
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'scale(0.9)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+          toast.remove();
+          checkToastContainerEmpty();
+        }, 300);
+      }, 4000);
+    }
+
+    function checkToastContainerEmpty() {
+      const container = document.getElementById('toast-container');
+      if (container && container.children.length === 0) {
+        container.classList.remove('active');
+      }
+    }
+
+    // Checkpoint interaction logic
+    function selectCheckpoint(index, pan = true) {
+      simCurrentIndex = index;
+      document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
+      
+      const container = document.getElementById('timeline-list');
+      const item = document.getElementById(`timeline-item-${index}`);
+      if (container && item) {
+        item.classList.add('active');
+        
+        // Only scroll the container internally to keep viewport scroll intact
+        const containerTop = container.scrollTop;
+        const containerBottom = containerTop + container.clientHeight;
+        const elemTop = item.offsetTop - container.offsetTop;
+        const elemBottom = elemTop + item.offsetHeight;
+        
+        if (elemTop < containerTop) {
+          container.scrollTo({ top: elemTop, behavior: 'smooth' });
+        } else if (elemBottom > containerBottom) {
+          container.scrollTo({ top: elemBottom - container.clientHeight, behavior: 'smooth' });
+        }
+      }
+      
+      // Update active checkpoint styles on the map
+      midpointMarkers.forEach((m, idx) => {
+        if (m && m.content) {
+          m.content.classList.remove('active');
+          m.zIndex = idx; // reset zIndex
+        }
+      });
+      
+      const marker = midpointMarkers[index];
+      if (marker) {
+        if (marker.content) {
+          marker.content.classList.add('active');
+          marker.zIndex = 950; // Place above other checkpoints
+        }
+        
+        if (activeInfoWindow) activeInfoWindow.close();
+        
+        const step = currentStepsData[index];
+        const markerColor = marker.content.style.backgroundColor;
+        const displayColor = markerColor === "rgb(234, 179, 8)" ? "#b45309" : markerColor;
+        const isNight = parseFloat(step.sun_elevation) <= 0.0;
+        const displaySide = isNight ? 'night' : step.sun_side;
+        
+        const contentString = `
+          <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4; min-width: 160px;">
+            <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
+            <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
+            <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
+            <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
+            <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
+            <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${displayColor};">${displaySide}</span>
+          </div>
+        `;
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: contentString
+        });
+        
+        infoWindow.open(map, marker);
+        activeInfoWindow = infoWindow;
+        
+        if (pan) {
+          map.panTo(marker.position);
+          if (map.getZoom() < 10) {
+            map.setZoom(11);
+          }
+        }
+      }
+    }
+
+    // Play simulation controls
+    function toggleSimulation() {
+      if (simulationInterval) {
+        stopSimulation();
+      } else {
+        startSimulation();
+      }
+    }
+
+    function startSimulation() {
+      if (!currentStepsData || currentStepsData.length === 0) return;
+      
+      const playBtn = document.getElementById('play-sim-btn');
+      playBtn.classList.add('active');
+      playBtn.innerHTML = `<i data-lucide="pause" style="width: 14px; height: 14px;"></i>`;
+      playBtn.title = "Pause Simulation";
+      
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+      
+      if (simCurrentIndex === undefined || simCurrentIndex === null || simCurrentIndex < 0 || simCurrentIndex >= currentStepsData.length - 1) {
+        simCurrentIndex = 0;
+      }
+      selectCheckpoint(simCurrentIndex, true);
+      
+      const speedSelect = document.getElementById('sim-speed-select');
+      const speedMultiplier = parseFloat(speedSelect ? speedSelect.value : 1.0);
+      const intervalMs = Math.round(2000 / speedMultiplier);
+      
+      simulationInterval = setInterval(() => {
+        simCurrentIndex++;
+        if (simCurrentIndex >= currentStepsData.length) {
+          stopSimulation();
+          showToast("Simulation completed!", "success");
+        } else {
+          selectCheckpoint(simCurrentIndex, true);
+        }
+      }, intervalMs);
+    }
+
+    function updateSimulationSpeed() {
+      const select = document.getElementById('sim-speed-select');
+      if (select) {
+        const val = parseFloat(select.value);
+        
+        if (simulationInterval) {
+          clearInterval(simulationInterval);
+          const intervalMs = Math.round(2000 / val);
+          
+          simulationInterval = setInterval(() => {
+            simCurrentIndex++;
+            if (simCurrentIndex >= currentStepsData.length) {
+              stopSimulation();
+              showToast("Simulation completed!", "success");
+            } else {
+              selectCheckpoint(simCurrentIndex, true);
+            }
+          }, intervalMs);
+        }
+      }
+    }
+
+    function stopSimulation() {
+      if (simulationInterval) {
+        clearInterval(simulationInterval);
+        simulationInterval = null;
+      }
+      
+      const playBtn = document.getElementById('play-sim-btn');
+      if (playBtn) {
+        playBtn.classList.remove('active');
+        playBtn.innerHTML = `<i data-lucide="play" style="width: 14px; height: 14px;"></i>`;
+        playBtn.title = "Play Simulation";
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      }
+    }
+
+    // Set default departure time with Flatpickr & initialize Lucide icons
     window.addEventListener('DOMContentLoaded', () => {
       flatpickr("#departure-input", {
         enableTime: true,
@@ -1225,6 +2180,10 @@
           updateMapRoute();
         }
       });
+      
+      if (window.lucide) {
+        lucide.createIcons();
+      }
     });
   </script>
   <!-- Callback triggers initMap when script finishes loading -->
