@@ -1200,10 +1200,11 @@
 
     // Visualization Global Variables
     let routePolyline = null;
-    let midpointMarkers = [];
-    let sunRayLines = [];
+    let activeMarkersMap = new Map();
     let startMarker = null;
     let endMarker = null;
+    let allStepsData = [];
+    let globalSampleRate = 1;
 
     // Simulation & Timeline Global Variables
     let currentStepsData = [];
@@ -1312,6 +1313,10 @@
       });
 
       directionsRenderer.setMap(map);
+
+      map.addListener('idle', () => {
+        updateViewportMarkers();
+      });
 
       // Listen for route index changes (e.g. clicking on alternative route lines on the map)
       directionsRenderer.addListener('routeindex_changed', () => {
@@ -1675,14 +1680,31 @@
       clearVisualization();
 
       // Save steps globally for simulation & timeline interaction
-      currentStepsData = data.steps || [];
+      const allSteps = data.steps || [];
+      allSteps.forEach((step, idx) => {
+        step.absoluteIndex = idx;
+      });
+      allStepsData = allSteps;
+
+      // Calculate global sample rate for timeline (aim to show ~150 items in the list)
+      const timelineCap = 150;
+      globalSampleRate = 1;
+      if (allSteps.length > timelineCap) {
+        globalSampleRate = Math.ceil(allSteps.length / timelineCap);
+      }
+
+      let visualSteps = [...allSteps];
+      if (visualSteps.length > timelineCap) {
+        visualSteps = visualSteps.filter((_, idx) => idx % globalSampleRate === 0);
+      }
+      currentStepsData = visualSteps;
 
       // Draw exact backend route polyline and checkpoints
-      const steps = data.steps || [];
-      if (steps.length > 0) {
+      const steps = visualSteps;
+      if (allSteps.length > 0) {
         // 1. Draw exact backend route polyline
         const backendPath = [];
-        steps.forEach(step => {
+        allSteps.forEach(step => {
           const sLat = parseFloat(step.start_lat);
           const sLng = parseFloat(step.start_lng);
           const eLat = parseFloat(step.end_lat);
@@ -1697,131 +1719,19 @@
         drawRoutePolyline(backendPath);
 
         // Draw custom start and end markers (S & D pins) so they remain visible
-        const firstStep = steps[0];
-        const lastStep = steps[steps.length - 1];
+        const firstStep = allSteps[0];
+        const lastStep = allSteps[allSteps.length - 1];
         const startLatLng = new google.maps.LatLng(parseFloat(firstStep.start_lat), parseFloat(firstStep.start_lng));
         const endLatLng = new google.maps.LatLng(parseFloat(lastStep.end_lat), parseFloat(lastStep.end_lng));
         const startAddr = document.getElementById('source-input').value;
         const endAddr = document.getElementById('dest-input').value;
         drawStartEndMarkers(startLatLng, endLatLng, startAddr, endAddr);
 
-        // 2. Draw checkpoints (midpoints) and sun ray direction vectors
-        steps.forEach((step, index) => {
-          const midLat = parseFloat(step.midpoint_lat);
-          const midLng = parseFloat(step.midpoint_lng);
-          if (isNaN(midLat) || isNaN(midLng)) {
-            return;
-          }
-          const midpointPos = new google.maps.LatLng(midLat, midLng);
-
-          // Color midpoint marker: Left = Blue, Right = Pink, Front/Behind = Yellow, Night = Gray
-          let markerColor = "#9ca3af";
-          const sunElev = parseFloat(step.sun_elevation);
-          if (!isNaN(sunElev) && sunElev > 0) {
-            if (step.sun_side === 'left') {
-              markerColor = "#3b82f6";
-            } else if (step.sun_side === 'right') {
-              markerColor = "#ec4899";
-            } else if (step.sun_side === 'front' || step.sun_side === 'behind') {
-              markerColor = "#eab308";
-            }
-          }
-
-          // Create custom AdvancedMarker HTML content (circle element)
-          const markerContent = document.createElement('div');
-          markerContent.className = 'checkpoint-marker';
-          markerContent.style.backgroundColor = markerColor;
-
-          const marker = new google.maps.marker.AdvancedMarkerElement({
-            position: midpointPos,
-            map: map,
-            title: `Checkpoint ${index + 1}`,
-            content: markerContent
-          });
-          midpointMarkers.push(marker);
-
-          // Draw sun direction vector if sun is above the horizon
-          const sunAz = parseFloat(step.sun_azimuth);
-          if (!isNaN(sunElev) && sunElev > 0 && !isNaN(sunAz)) {
-            const offsetScale = 0.0015; // Ray length
-            const rad = sunAz * Math.PI / 180;
-            const endLat = midLat + offsetScale * Math.cos(rad);
-            const endLng = midLng + offsetScale * Math.sin(rad);
-            if (!isNaN(endLat) && !isNaN(endLng)) {
-              const sunEndPos = new google.maps.LatLng(endLat, endLng);
-
-              const sunRay = new google.maps.Polyline({
-                path: [midpointPos, sunEndPos],
-                geodesic: true,
-                strokeColor: "#eab308",
-                strokeOpacity: 0.8,
-                strokeWeight: 2.5,
-                map: map,
-                icons: [{
-                  icon: {
-                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                    scale: 2,
-                    fillColor: "#eab308",
-                    fillOpacity: 1,
-                    strokeColor: "#eab308",
-                    strokeWeight: 1
-                  },
-                  offset: '100%'
-                }]
-              });
-              sunRayLines.push(sunRay);
-            }
-          }
-
-          // Trigger selection on marker click
-          marker.addListener('click', () => {
-            selectCheckpoint(index, false);
-          });
-
-          // Add hover popover detailing the metrics at this checkpoint
-          const isNight = isNaN(sunElev) || sunElev <= 0;
-          const displaySide = isNight ? 'night' : step.sun_side;
-          const displayColor = isNight ? '#9ca3af' : (markerColor === "#eab308" ? "#b45309" : markerColor);
-
-          const contentString = `
-            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4; min-width: 165px;">
-              <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
-              <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
-              <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
-              <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
-              <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
-              <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${displayColor};">${displaySide}</span>
-            </div>
-          `;
-
-          const infoWindow = new google.maps.InfoWindow({
-            content: contentString
-          });
-          marker.infoWindow = infoWindow;
-
-          marker.addListener('mouseover', () => {
-            if (activeInfoWindow) activeInfoWindow.close();
-            infoWindow.open(map, marker);
-            activeInfoWindow = infoWindow;
-            
-            // Highlight item in timeline
-            document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
-            const el = document.getElementById(`timeline-item-${index}`);
-            if (el) {
-              el.classList.add('active');
-              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-          });
-
-          marker.addListener('mouseout', () => {
-            infoWindow.close();
-            if (activeInfoWindow === infoWindow) activeInfoWindow = null;
-          });
-        });
-
         // Populate timeline list
         const timelineList = document.getElementById('timeline-list');
         timelineList.innerHTML = '';
+
+        const fragment = document.createDocumentFragment();
 
         steps.forEach((step, index) => {
           const item = document.createElement('div');
@@ -1847,9 +1757,10 @@
           const isNight = parseFloat(step.sun_elevation) <= 0.0;
           const side = isNight ? 'night' : step.sun_side;
 
+          const absIdx = (step.absoluteIndex !== undefined) ? step.absoluteIndex : index;
           item.innerHTML = `
             <div class="timeline-item-left">
-              <span class="timeline-item-title">Checkpoint ${index + 1} &bull; ${timeStr}</span>
+              <span class="timeline-item-title">Checkpoint ${absIdx + 1} &bull; ${timeStr}</span>
               <span class="timeline-item-meta">${distanceKm} km &bull; ${durationMins}m &bull; Heading ${bearingDeg}° (${dirStr})</span>
             </div>
             <div class="timeline-item-right">
@@ -1862,47 +1773,61 @@
           });
 
           item.addEventListener('mouseenter', () => {
-            const marker = midpointMarkers[index];
-            if (marker && marker.content) {
-              marker.content.classList.add('hovered');
-              marker.zIndex = 1001;
-              if (simCurrentIndex !== index) {
-                if (activeInfoWindow) activeInfoWindow.close();
-                if (marker.infoWindow) {
-                  marker.infoWindow.open(map, marker);
-                  activeInfoWindow = marker.infoWindow;
+            const originalIdx = absIdx;
+            const val = activeMarkersMap.get(originalIdx);
+            if (val && val.marker) {
+              const marker = val.marker;
+              if (marker.content) {
+                marker.content.classList.add('hovered');
+                marker.zIndex = 1001;
+                if (simCurrentIndex !== index) {
+                  if (activeInfoWindow) activeInfoWindow.close();
+                  const step = allStepsData[originalIdx];
+                  const markerColor = marker.content.style.backgroundColor;
+                  openInfoWindowForMarker(marker, originalIdx, step, markerColor);
                 }
               }
             }
           });
 
           item.addEventListener('mouseleave', () => {
-            const marker = midpointMarkers[index];
-            if (marker && marker.content) {
-              marker.content.classList.remove('hovered');
-              marker.zIndex = index;
-              if (simCurrentIndex !== index) {
-                if (marker.infoWindow) {
-                  marker.infoWindow.close();
-                }
-                if (activeInfoWindow === marker.infoWindow) activeInfoWindow = null;
-                
-                // Restore info window of currently selected checkpoint, if any
-                if (simCurrentIndex !== null && midpointMarkers[simCurrentIndex]) {
-                  const activeMarker = midpointMarkers[simCurrentIndex];
-                  if (activeMarker.infoWindow) {
-                    activeMarker.infoWindow.open(map, activeMarker);
-                    activeInfoWindow = activeMarker.infoWindow;
+            const originalIdx = absIdx;
+            const val = activeMarkersMap.get(originalIdx);
+            if (val && val.marker) {
+              const marker = val.marker;
+              if (marker.content) {
+                marker.content.classList.remove('hovered');
+                marker.zIndex = originalIdx;
+                if (simCurrentIndex !== index) {
+                  if (marker.infoWindow) {
+                    marker.infoWindow.close();
+                  }
+                  if (activeInfoWindow === marker.infoWindow) activeInfoWindow = null;
+                  
+                  // Restore info window of currently selected checkpoint, if any
+                  const activeStep = currentStepsData[simCurrentIndex];
+                  const activeOriginalIdx = (activeStep && activeStep.absoluteIndex !== undefined) ? activeStep.absoluteIndex : simCurrentIndex;
+                  const activeVal = activeMarkersMap.get(activeOriginalIdx);
+                  if (activeVal && activeVal.marker) {
+                    const activeMarker = activeVal.marker;
+                    const activeStepObj = allStepsData[activeOriginalIdx];
+                    const activeColor = activeMarker.content.style.backgroundColor;
+                    openInfoWindowForMarker(activeMarker, activeOriginalIdx, activeStepObj, activeColor);
                   }
                 }
               }
             }
           });
 
-          timelineList.appendChild(item);
+          fragment.appendChild(item);
         });
 
+        timelineList.appendChild(fragment);
+
         document.getElementById('timeline-container').style.display = 'block';
+
+        // Dynamically compute and show markers for current viewport bounds and zoom level
+        updateViewportMarkers();
 
         // Select the initial checkpoint (index 0) by default after the browser paint loop finishes
         setTimeout(() => {
@@ -1992,10 +1917,15 @@
         endMarker.setMap(null);
         endMarker = null;
       }
-      midpointMarkers.forEach(m => m.setMap(null));
-      midpointMarkers = [];
-      sunRayLines.forEach(l => l.setMap(null));
-      sunRayLines = [];
+
+      // Clear all active viewport markers and sun rays
+      activeMarkersMap.forEach(val => {
+        if (val.marker) val.marker.setMap(null);
+        if (val.sunRay) val.sunRay.setMap(null);
+      });
+      activeMarkersMap.clear();
+      allStepsData = [];
+
       stopSimulation();
       document.getElementById('timeline-container').style.display = 'none';
     }
@@ -2006,10 +1936,210 @@
       document.getElementById('result-content').style.display = 'none';
       document.getElementById('loading-state').style.display = 'none';
       
+      // Hide and clear route options
+      document.getElementById('route-options-group').style.display = 'none';
+      document.getElementById('route-options-list').innerHTML = '';
+      
       const submitBtn = document.getElementById('submit-btn');
       if (submitBtn) {
         submitBtn.classList.add('pulse-highlight');
       }
+
+      // Reset map view to default center and zoom
+      if (map) {
+        map.setZoom(6);
+        map.setCenter({ lat: 22.3072, lng: 72.8634 });
+      }
+    }
+
+    function updateViewportMarkers() {
+      if (!map || allStepsData.length === 0) return;
+      const bounds = map.getBounds();
+      if (!bounds) return;
+
+      const zoom = map.getZoom();
+      
+      // Determine the sampling step based on map zoom level
+      let step = 1;
+      if (zoom < 7) {
+        step = 16;
+      } else if (zoom < 9) {
+        step = 8;
+      } else if (zoom < 11) {
+        step = 4;
+      } else if (zoom < 13) {
+        step = 2;
+      }
+
+      // Filter steps that are within the current map viewport bounds
+      const margin = 0.05; // small buffer outside bounds
+      const northEast = bounds.getNorthEast();
+      const southWest = bounds.getSouthWest();
+      const minLat = southWest.lat() - margin;
+      const maxLat = northEast.lat() + margin;
+      const minLng = southWest.lng() - margin;
+      const maxLng = northEast.lng() + margin;
+
+      const visibleCandidates = [];
+      for (let i = 0; i < allStepsData.length; i++) {
+        const s = allStepsData[i];
+        const lat = parseFloat(s.midpoint_lat);
+        const lng = parseFloat(s.midpoint_lng);
+        if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
+          // Keep only steps matching the zoom step selection
+          if (i % step === 0) {
+            visibleCandidates.push({ step: s, originalIndex: i });
+          }
+        }
+      }
+
+      // Keep a max cap on active markers to prevent browser overload
+      const maxMarkers = 150;
+      let targetVisible = visibleCandidates;
+      if (visibleCandidates.length > maxMarkers) {
+        const subSample = Math.ceil(visibleCandidates.length / maxMarkers);
+        targetVisible = visibleCandidates.filter((_, idx) => idx % subSample === 0);
+      }
+
+      const targetIndices = new Set(targetVisible.map(item => item.originalIndex));
+
+      // 1. Remove markers that are no longer needed
+      for (const [idx, val] of activeMarkersMap.entries()) {
+        if (!targetIndices.has(idx)) {
+          if (val.marker) val.marker.setMap(null);
+          if (val.sunRay) val.sunRay.setMap(null);
+          activeMarkersMap.delete(idx);
+        }
+      }
+
+      // 2. Add new markers
+      targetVisible.forEach(item => {
+        const idx = item.originalIndex;
+        if (activeMarkersMap.has(idx)) {
+          // If the marker is already active, make sure it is attached to the map
+          const activeItem = activeMarkersMap.get(idx);
+          if (activeItem.marker.map !== map) {
+            activeItem.marker.setMap(map);
+          }
+          if (activeItem.sunRay && activeItem.sunRay.map !== map) {
+            activeItem.sunRay.setMap(map);
+          }
+          return;
+        }
+
+        const step = item.step;
+        const midLat = parseFloat(step.midpoint_lat);
+        const midLng = parseFloat(step.midpoint_lng);
+        if (isNaN(midLat) || isNaN(midLng)) return;
+
+        const midpointPos = new google.maps.LatLng(midLat, midLng);
+
+        // Color midpoint marker: Left = Blue, Right = Pink, Front/Behind = Yellow, Night = Gray
+        let markerColor = "#9ca3af";
+        const sunElev = parseFloat(step.sun_elevation);
+        if (!isNaN(sunElev) && sunElev > 0) {
+          if (step.sun_side === 'left') {
+            markerColor = "#3b82f6";
+          } else if (step.sun_side === 'right') {
+            markerColor = "#ec4899";
+          } else if (step.sun_side === 'front' || step.sun_side === 'behind') {
+            markerColor = "#eab308";
+          }
+        }
+
+        const markerContent = document.createElement('div');
+        markerContent.className = 'checkpoint-marker';
+        markerContent.style.backgroundColor = markerColor;
+
+        // If this marker matches the currently selected simulation/timeline index, highlight it
+        const activeStep = currentStepsData[simCurrentIndex];
+        const activeAbsIdx = (activeStep && activeStep.absoluteIndex !== undefined) ? activeStep.absoluteIndex : simCurrentIndex;
+        if (idx === activeAbsIdx) {
+          markerContent.classList.add('active');
+          setTimeout(() => {
+            openInfoWindowForMarker(marker, idx, step, markerColor);
+          }, 50);
+        }
+
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          position: midpointPos,
+          map: map,
+          title: `Checkpoint ${idx + 1}`,
+          content: markerContent
+        });
+
+        // Draw sun direction vector if sun is above the horizon
+        let sunRay = null;
+        const sunAz = parseFloat(step.sun_azimuth);
+        if (!isNaN(sunElev) && sunElev > 0 && !isNaN(sunAz)) {
+          const offsetScale = 0.0015; // Ray length
+          const rad = sunAz * Math.PI / 180;
+          const endLat = midLat + offsetScale * Math.cos(rad);
+          const endLng = midLng + offsetScale * Math.sin(rad);
+          if (!isNaN(endLat) && !isNaN(endLng)) {
+            const sunEndPos = new google.maps.LatLng(endLat, endLng);
+
+            sunRay = new google.maps.Polyline({
+              path: [midpointPos, sunEndPos],
+              geodesic: true,
+              strokeColor: "#eab308",
+              strokeOpacity: 0.8,
+              strokeWeight: 2.5,
+              map: map,
+              icons: [{
+                icon: {
+                  path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                  scale: 2,
+                  fillColor: "#eab308",
+                  fillOpacity: 1,
+                  strokeColor: "#eab308",
+                  strokeWeight: 1
+                },
+                offset: '100%'
+              }]
+            });
+          }
+        }
+
+        // Trigger selection on marker click
+        marker.addListener('click', () => {
+          const closestVisualIdx = Math.round(idx / globalSampleRate);
+          selectCheckpoint(closestVisualIdx, false);
+          openInfoWindowForMarker(marker, idx, step, markerColor);
+        });
+
+        activeMarkersMap.set(idx, { marker, sunRay });
+      });
+    }
+
+    function openInfoWindowForMarker(marker, idx, step, markerColor) {
+      if (activeInfoWindow) activeInfoWindow.close();
+
+      const displayColor = markerColor === "rgb(234, 179, 8)" ? "#b45309" : markerColor;
+      const isNight = parseFloat(step.sun_elevation) <= 0.0;
+      const displaySide = isNight ? 'night' : step.sun_side;
+
+      const contentString = `
+        <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4; min-width: 160px;">
+          <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${idx + 1}</strong>
+          <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
+          <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
+          <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
+          <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
+          <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${displayColor};">${displaySide}</span>
+        </div>
+      `;
+
+      if (!marker.infoWindow) {
+        marker.infoWindow = new google.maps.InfoWindow({
+          content: contentString
+        });
+      } else {
+        marker.infoWindow.setContent(contentString);
+      }
+
+      marker.infoWindow.open(map, marker);
+      activeInfoWindow = marker.infoWindow;
     }
 
     // Draw custom glowing Start and End markers on the map
@@ -2143,54 +2273,47 @@
       }
       
       // Update active checkpoint styles on the map
-      midpointMarkers.forEach((m, idx) => {
-        if (m && m.content) {
-          m.content.classList.remove('active');
-          m.zIndex = idx; // reset zIndex
+      activeMarkersMap.forEach((val, idx) => {
+        if (val.marker && val.marker.content) {
+          val.marker.content.classList.remove('active');
+          val.marker.zIndex = idx; // reset zIndex
         }
       });
       
-      const marker = midpointMarkers[index];
-      if (marker) {
+      // Calculate the original index corresponding to this visual step index
+      const activeStep = currentStepsData[index];
+      const originalIdx = (activeStep && activeStep.absoluteIndex !== undefined) ? activeStep.absoluteIndex : index;
+      const activeItem = activeMarkersMap.get(originalIdx);
+      if (activeItem && activeItem.marker) {
+        const marker = activeItem.marker;
         if (marker.content) {
           marker.content.classList.add('active');
-          marker.zIndex = 950; // Place above other checkpoints
+          marker.zIndex = 950;
         }
         
-        if (activeInfoWindow) activeInfoWindow.close();
-        
-        const step = currentStepsData[index];
+        const step = allStepsData[originalIdx];
         const markerColor = marker.content.style.backgroundColor;
-        const displayColor = markerColor === "rgb(234, 179, 8)" ? "#b45309" : markerColor;
-        const isNight = parseFloat(step.sun_elevation) <= 0.0;
-        const displaySide = isNight ? 'night' : step.sun_side;
-        
-        const contentString = `
-          <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4; min-width: 160px;">
-            <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
-            <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
-            <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
-            <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
-            <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
-            <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${displayColor};">${displaySide}</span>
-          </div>
-        `;
-        
-        if (!marker.infoWindow) {
-          marker.infoWindow = new google.maps.InfoWindow({
-            content: contentString
-          });
-        } else {
-          marker.infoWindow.setContent(contentString);
-        }
-        
-        marker.infoWindow.open(map, marker);
-        activeInfoWindow = marker.infoWindow;
+        openInfoWindowForMarker(marker, originalIdx, step, markerColor);
         
         if (pan) {
           map.panTo(marker.position);
           if (map.getZoom() < 10) {
             map.setZoom(11);
+          }
+        }
+      } else {
+        // If the marker is not currently created (e.g. out of viewport),
+        // we can still pan to it, and map 'idle' listener will automatically create it!
+        const step = allStepsData[originalIdx];
+        if (step && pan) {
+          const lat = parseFloat(step.midpoint_lat);
+          const lng = parseFloat(step.midpoint_lng);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const pos = new google.maps.LatLng(lat, lng);
+            map.panTo(pos);
+            if (map.getZoom() < 10) {
+              map.setZoom(11);
+            }
           }
         }
       }
@@ -2260,10 +2383,10 @@
     }
 
     function stopSimulation() {
-      if (simulationInterval) {
-        clearInterval(simulationInterval);
-        simulationInterval = null;
-      }
+      if (!simulationInterval) return;
+
+      clearInterval(simulationInterval);
+      simulationInterval = null;
       
       const playBtn = document.getElementById('play-sim-btn');
       if (playBtn) {
