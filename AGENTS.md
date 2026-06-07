@@ -1,5 +1,9 @@
 # ShadowMe API - Technical Guidelines
 
+## General Agent Rules
+
+* **Commit Constraints**: Never try to auto-commit anything after a task completion on your own. Only commit when explicitly asked by the user.
+
 ## Objective
 
 Build a lightweight Ruby API service that recommends whether a passenger should sit on the **left side** or **right side** of a vehicle to minimize direct sunlight exposure during a journey.
