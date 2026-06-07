@@ -56,6 +56,8 @@ class GoogleMapsClient
       data
     when 'ZERO_RESULTS', 'NOT_FOUND'
       raise InvalidRouteError, "No route found between '#{origin}' and '#{destination}'"
+    when 'MAX_ROUTE_LENGTH_EXCEEDED'
+      raise InvalidRouteError, "The requested route between '#{origin}' and '#{destination}' is too long to be calculated."
     when 'OVER_QUERY_LIMIT', 'REQUEST_DENIED', 'INVALID_REQUEST', 'UNKNOWN_ERROR'
       error_msg = data[:error_message] || "Status: #{data[:status]}"
       raise GoogleApiError, "Google Maps API error: #{error_msg}"
