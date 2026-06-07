@@ -26,6 +26,9 @@ class App < Roda
   plugin :json_parser
   # Enable halting of requests early
   plugin :halt
+  # Serve static files from public directory
+  plugin :public
+
   # Enable structured error handling and translate exceptions into standard format without exposing backtraces
   plugin :error_handler do |e|
     @error = e.message
@@ -65,6 +68,9 @@ class App < Roda
     @cache_hit = false
 
     begin
+      # Serve static assets
+      r.public
+
       # 1. Health check endpoint (GET /health)
       r.get 'health' do
         response.status = 200
