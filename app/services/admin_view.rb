@@ -492,15 +492,16 @@ class AdminView
     let sourceAddressSelected = false;
     let destAddressSelected = false;
 
+    // Visualization Global Variables
+    let routePolyline = null;
+    let midpointMarkers = [];
+    let sunRayLines = [];
+
     // Google Maps Initialization Callback
     function initMap() {
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({
-        polylineOptions: {
-          strokeColor: "#6366f1",
-          strokeWeight: 6,
-          strokeOpacity: 0.85
-        },
+        suppressPolylines: true, // Suppress default route renderer to draw exact step coordinates
         markerOptions: {
           animation: google.maps.Animation.DROP
         }
@@ -650,7 +651,8 @@ class AdminView
           sourceAddressSelected = false;
           document.getElementById('source-coords').value = '';
           document.getElementById('source-coords-lbl').classList.remove('visible');
-          directionsRenderer.setDirections({ routes: [] }); // Clear map path
+          directionsRenderer.setDirections({ routes: [] }); // Clear map markers
+          clearVisualization();
           validateFormState();
         }
       });
@@ -660,7 +662,8 @@ class AdminView
           destAddressSelected = false;
           document.getElementById('dest-coords').value = '';
           document.getElementById('dest-coords-lbl').classList.remove('visible');
-          directionsRenderer.setDirections({ routes: [] }); // Clear map path
+          directionsRenderer.setDirections({ routes: [] }); // Clear map markers
+          clearVisualization();
           validateFormState();
         }
       });
@@ -668,18 +671,22 @@ class AdminView
 
     function updateMapRoute() {
       if (sourceAddressSelected && destAddressSelected) {
-        const sourceAddress = document.getElementById('source-input').value;
-        const destAddress = document.getElementById('dest-input').value;
+        const source = document.getElementById('source-coords').value;
+        const destination = document.getElementById('dest-coords').value;
 
         directionsService.route(
           {
-            origin: sourceAddress,
-            destination: destAddress,
+            origin: source,
+            destination: destination,
             travelMode: google.maps.TravelMode.DRIVING
           },
           (result, status) => {
             if (status === 'OK') {
               directionsRenderer.setDirections(result);
+              // Draw initial preview polyline from browser directions path
+              if (result.routes && result.routes[0]) {
+                drawRoutePolyline(result.routes[0].overview_path);
+              }
             } else {
               console.error('Directions request failed due to ' + status);
             }
@@ -699,9 +706,6 @@ class AdminView
       const departureVal = document.getElementById('departure-input').value;
 
       if (!source || !destination || !departureVal) return;
-
-      const sourceAddress = document.getElementById('source-input').value;
-      const destAddress = document.getElementById('dest-input').value;
 
       // Construct ISO timestamp with local timezone offset
       const localDate = new Date(departureVal);
@@ -733,11 +737,11 @@ class AdminView
         if (response.ok) {
           renderResult(data, cacheHitHeader);
           
-          // Trigger route rendering on map
+          // Trigger route rendering on map using coordinates
           directionsService.route(
             {
-              origin: sourceAddress,
-              destination: destAddress,
+              origin: source,
+              destination: destination,
               travelMode: google.maps.TravelMode.DRIVING
             },
             (result, status) => {
@@ -764,6 +768,107 @@ class AdminView
       document.getElementById('placeholder-state').style.display = 'none';
       const content = document.getElementById('result-content');
       content.style.display = 'block';
+
+      // Clear previous visualization elements
+      clearVisualization();
+
+      // Draw exact backend route polyline and checkpoints
+      const steps = data.steps || [];
+      if (steps.length > 0) {
+        // 1. Draw exact backend route polyline
+        const backendPath = [];
+        steps.forEach(step => {
+          backendPath.push(new google.maps.LatLng(step.start_lat, step.start_lng));
+          backendPath.push(new google.maps.LatLng(step.end_lat, step.end_lng));
+        });
+        drawRoutePolyline(backendPath);
+
+        // 2. Draw checkpoints (midpoints) and sun ray direction vectors
+        steps.forEach((step, index) => {
+          const midpointPos = new google.maps.LatLng(step.midpoint_lat, step.midpoint_lng);
+
+          // Color midpoint marker: Left = Blue, Right = Pink, Front/Behind = Yellow, Night = Gray
+          let markerColor = "#9ca3af";
+          if (step.sun_elevation > 0) {
+            if (step.sun_side === 'left') {
+              markerColor = "#3b82f6";
+            } else if (step.sun_side === 'right') {
+              markerColor = "#ec4899";
+            } else if (step.sun_side === 'front' || step.sun_side === 'behind') {
+              markerColor = "#eab308";
+            }
+          }
+
+          const marker = new google.maps.Marker({
+            position: midpointPos,
+            map: map,
+            title: `Checkpoint ${index + 1}`,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 6,
+              fillColor: markerColor,
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 1.5
+            }
+          });
+          midpointMarkers.push(marker);
+
+          // Draw sun direction vector if sun is above the horizon
+          if (step.sun_elevation > 0) {
+            const offsetScale = 0.0015; // Ray length
+            const rad = step.sun_azimuth * Math.PI / 180;
+            const endLat = step.midpoint_lat + offsetScale * Math.cos(rad);
+            const endLng = step.midpoint_lng + offsetScale * Math.sin(rad);
+            const sunEndPos = new google.maps.LatLng(endLat, endLng);
+
+            const sunRay = new google.maps.Polyline({
+              path: [midpointPos, sunEndPos],
+              geodesic: true,
+              strokeColor: "#eab308",
+              strokeOpacity: 0.8,
+              strokeWeight: 2.5,
+              map: map,
+              icons: [{
+                icon: {
+                  path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                  scale: 2,
+                  fillColor: "#eab308",
+                  fillOpacity: 1,
+                  strokeColor: "#eab308",
+                  strokeWeight: 1
+                },
+                offset: '100%'
+              }]
+            });
+            sunRayLines.push(sunRay);
+
+            // Add hover popover detailing the metrics at this checkpoint
+            const contentString = `
+              <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4;">
+                <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
+                <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
+                <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
+                <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
+                <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
+                <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${markerColor === "#eab308" ? "#b45309" : markerColor};">${step.sun_side}</span>
+              </div>
+            `;
+
+            const infoWindow = new google.maps.InfoWindow({
+              content: contentString
+            });
+
+            marker.addListener('mouseover', () => {
+              infoWindow.open(map, marker);
+            });
+
+            marker.addListener('mouseout', () => {
+              infoWindow.close();
+            });
+          }
+        });
+      }
 
       // Update badge
       const badge = document.getElementById('recommended-side-badge');
@@ -809,6 +914,32 @@ class AdminView
 
       // Update cache status
       document.getElementById('cache-val').textContent = isCacheHit ? 'Hit' : 'Miss';
+    }
+
+    // Visualization Helpers
+    function drawRoutePolyline(pathPoints) {
+      if (routePolyline) {
+        routePolyline.setMap(null);
+      }
+      routePolyline = new google.maps.Polyline({
+        path: pathPoints,
+        geodesic: true,
+        strokeColor: "#6366f1",
+        strokeWeight: 6,
+        strokeOpacity: 0.85,
+        map: map
+      });
+    }
+
+    function clearVisualization() {
+      if (routePolyline) {
+        routePolyline.setMap(null);
+        routePolyline = null;
+      }
+      midpointMarkers.forEach(m => m.setMap(null));
+      midpointMarkers = [];
+      sunRayLines.forEach(l => l.setMap(null));
+      sunRayLines = [];
     }
 
     // Set default departure time

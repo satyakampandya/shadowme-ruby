@@ -3,14 +3,15 @@ class SeatRecommendationService
   # left_exposure_seconds: total exposure seconds on the left side
   # right_exposure_seconds: total exposure seconds on the right side
   # Returns a SeatRecommendation model.
-  def self.recommend(left_exposure_seconds:, right_exposure_seconds:, is_entirely_night: false)
+  def self.recommend(left_exposure_seconds:, right_exposure_seconds:, is_entirely_night: false, steps: [])
     if is_entirely_night
       return SeatRecommendation.new(
         recommended_side: :either,
         left_exposure_minutes: 0,
         right_exposure_minutes: 0,
         confidence: :high,
-        message: "It is night time, enjoy your journey!"
+        message: "It is night time, enjoy your journey!",
+        steps: steps
       )
     end
 
@@ -53,7 +54,8 @@ class SeatRecommendationService
       left_exposure_minutes: left_minutes,
       right_exposure_minutes: right_minutes,
       confidence: confidence,
-      message: message
+      message: message,
+      steps: steps
     )
   end
 end

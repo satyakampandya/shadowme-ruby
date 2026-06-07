@@ -108,6 +108,11 @@ class ApiEndpointsTest < Minitest::Test
     assert_kind_of Integer, body[:right_exposure_minutes]
     assert_includes ["low", "medium", "high"], body[:confidence]
     assert_equal "You should sit on the #{body[:recommended_side]} side of the vehicle to minimize direct sunlight exposure.", body[:message]
+    
+    assert_kind_of Array, body[:steps]
+    refute_empty body[:steps]
+    step_detail = body[:steps].first
+    assert_kind_of Float, step_detail[:start_lat]
   end
 
   def test_recommendation_endpoint_validation_errors

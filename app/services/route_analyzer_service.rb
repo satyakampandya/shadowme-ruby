@@ -49,6 +49,7 @@ class RouteAnalyzerService
     right_exposure_seconds = 0
     accumulated_duration_seconds = 0
     night_steps_count = 0
+    steps_details = []
 
     processed_steps.each do |step|
       analysis = StepAnalyzerService.analyze(
@@ -69,13 +70,30 @@ class RouteAnalyzerService
         end
       end
 
+      steps_details << {
+        start_lat: step.start_lat.to_f,
+        start_lng: step.start_lng.to_f,
+        end_lat: step.end_lat.to_f,
+        end_lng: step.end_lng.to_f,
+        duration: step.duration.to_i,
+        distance: step.distance.to_i,
+        midpoint_lat: analysis[:midpoint_lat].to_f,
+        midpoint_lng: analysis[:midpoint_lng].to_f,
+        midpoint_time: analysis[:midpoint_time].iso8601,
+        bearing: analysis[:bearing].to_f,
+        sun_azimuth: analysis[:sun_position].azimuth.to_f,
+        sun_elevation: analysis[:sun_position].elevation.to_f,
+        sun_side: analysis[:sun_side].to_s
+      }
+
       accumulated_duration_seconds += step.duration
     end
 
     {
       left_exposure_seconds: left_exposure_seconds,
       right_exposure_seconds: right_exposure_seconds,
-      is_entirely_night: (night_steps_count == processed_steps.size)
+      is_entirely_night: (night_steps_count == processed_steps.size),
+      steps: steps_details
     }
   end
 end

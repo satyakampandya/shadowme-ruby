@@ -10,6 +10,7 @@ class RecommendationSerializer
       confidence: recommendation.confidence
     }
     hash[:message] = recommendation.message if recommendation.message
+    hash[:steps] = recommendation.steps if recommendation.steps && !recommendation.steps.empty?
     hash
   end
 
