@@ -31,7 +31,7 @@ class TripAnalyzerServiceTest < Minitest::Test
     }
 
     stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
-      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', key: 'test-api-key', departure_time: departure_time.to_i.to_s })
+      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', alternatives: 'true', key: 'test-api-key', departure_time: departure_time.to_i.to_s })
       .to_return(status: 200, body: Oj.dump(mock_response, mode: :compat), headers: { 'Content-Type' => 'application/json' })
 
     trip_request = TripRequest.new(

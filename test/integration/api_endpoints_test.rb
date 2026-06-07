@@ -94,7 +94,7 @@ class ApiEndpointsTest < Minitest::Test
     dep_time_secs = Time.parse(payload[:departure_time]).to_i.to_s
 
     stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
-      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', key: 'test-api-key', departure_time: dep_time_secs })
+      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', alternatives: 'true', key: 'test-api-key', departure_time: dep_time_secs })
       .to_return(status: 200, body: Oj.dump(mock_response, mode: :compat), headers: { 'Content-Type' => 'application/json' })
 
     header 'Content-Type', 'application/json'
@@ -143,7 +143,7 @@ class ApiEndpointsTest < Minitest::Test
     dep_time_secs = Time.parse(payload[:departure_time]).to_i.to_s
 
     stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
-      .with(query: { origin: '21.1702,72.8311', destination: '0.0,0.0', key: 'test-api-key', departure_time: dep_time_secs })
+      .with(query: { origin: '21.1702,72.8311', destination: '0.0,0.0', alternatives: 'true', key: 'test-api-key', departure_time: dep_time_secs })
       .to_return(status: 200, body: Oj.dump({ status: "ZERO_RESULTS", routes: [] }, mode: :compat), headers: { 'Content-Type' => 'application/json' })
 
     header 'Content-Type', 'application/json'
@@ -165,7 +165,7 @@ class ApiEndpointsTest < Minitest::Test
     dep_time_secs = Time.parse(payload[:departure_time]).to_i.to_s
 
     stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
-      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', key: 'test-api-key', departure_time: dep_time_secs })
+      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', alternatives: 'true', key: 'test-api-key', departure_time: dep_time_secs })
       .to_return(status: 200, body: Oj.dump({ status: "REQUEST_DENIED", error_message: "IP blocked" }, mode: :compat), headers: { 'Content-Type' => 'application/json' })
 
     header 'Content-Type', 'application/json'
@@ -181,7 +181,8 @@ class ApiEndpointsTest < Minitest::Test
     payload = {
       source: "21.1702,72.8311",
       destination: "23.0225,72.5714",
-      departure_time: "2026-06-10T08:00:00+05:30"
+      departure_time: "2026-06-10T08:00:00+05:30",
+      route_index: 2
     }
 
     cached_response = {
@@ -205,6 +206,7 @@ class ApiEndpointsTest < Minitest::Test
       assert_equal 40, body[:left_exposure_minutes]
       assert_equal 10, body[:right_exposure_minutes]
       assert_equal "high", body[:confidence]
+      assert_equal 2, body[:route_index]
     end
   end
 
@@ -238,7 +240,7 @@ class ApiEndpointsTest < Minitest::Test
     dep_time_secs = Time.parse(payload[:departure_time]).to_i.to_s
 
     stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
-      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', key: 'test-api-key', departure_time: dep_time_secs })
+      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', alternatives: 'true', key: 'test-api-key', departure_time: dep_time_secs })
       .to_return(status: 200, body: Oj.dump(mock_response, mode: :compat), headers: { 'Content-Type' => 'application/json' })
 
     header 'Content-Type', 'application/json'
@@ -271,5 +273,64 @@ class ApiEndpointsTest < Minitest::Test
     assert_includes last_response.headers['Content-Type'], 'text/html'
     assert_includes last_response.body, 'ShadowMe Admin Portal'
     assert_includes last_response.body, 'key=test-api-key'
+  end
+
+  def test_recommendation_endpoint_with_route_index_success
+    payload = {
+      source: "21.1702,72.8311",
+      destination: "23.0225,72.5714",
+      departure_time: "2026-06-10T08:00:00+05:30",
+      route_index: 1
+    }
+
+    mock_response = {
+      status: "OK",
+      routes: [
+        {
+          legs: [
+            {
+              steps: [
+                {
+                  distance: { value: 1000 },
+                  duration: { value: 600 },
+                  start_location: { lat: 21.17, lng: 72.83 },
+                  end_location: { lat: 21.18, lng: 72.83 }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          legs: [
+            {
+              steps: [
+                {
+                  distance: { value: 2000 },
+                  duration: { value: 1200 },
+                  start_location: { lat: 21.17, lng: 72.83 },
+                  end_location: { lat: 21.17, lng: 72.84 }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    dep_time_secs = Time.parse(payload[:departure_time]).to_i.to_s
+
+    stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
+      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', alternatives: 'true', key: 'test-api-key', departure_time: dep_time_secs })
+      .to_return(status: 200, body: Oj.dump(mock_response, mode: :compat), headers: { 'Content-Type' => 'application/json' })
+
+    header 'Content-Type', 'application/json'
+    post '/api/v1/recommendation', Oj.dump(payload, mode: :compat)
+
+    assert_equal 200, last_response.status
+    body = Oj.load(last_response.body, symbol_keys: true)
+
+    # Route 1 has step of duration 1200 seconds = 20 minutes
+    total_exposure = body[:left_exposure_minutes] + body[:right_exposure_minutes]
+    assert_equal 20, total_exposure
   end
 end

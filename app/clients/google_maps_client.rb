@@ -27,6 +27,7 @@ class GoogleMapsClient
     params = {
       origin: origin,
       destination: destination,
+      alternatives: 'true',
       key: @api_key
     }
     

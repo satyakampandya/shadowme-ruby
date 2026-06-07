@@ -11,6 +11,7 @@ class RecommendationSerializer
     }
     hash[:message] = recommendation.message if recommendation.message
     hash[:steps] = recommendation.steps if recommendation.steps && !recommendation.steps.empty?
+    hash[:route_index] = recommendation.route_index if recommendation.respond_to?(:route_index) && !recommendation.route_index.nil?
     hash
   end
 

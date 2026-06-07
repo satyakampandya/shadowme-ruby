@@ -38,33 +38,60 @@ class TripCacheTest < Minitest::Test
     @mock_redis.define_singleton_method(:get) { |k| store[k] }
     @mock_redis.define_singleton_method(:setex) { |k, ttl, v| store[k] = v }
 
-    rec_hash = {
+    rec_hash1 = {
       recommended_side: "left",
       left_exposure_minutes: 15,
       right_exposure_minutes: 72,
-      confidence: "high"
+      confidence: "high",
+      route_index: 0
+    }
+
+    rec_hash2 = {
+      recommended_side: "right",
+      left_exposure_minutes: 40,
+      right_exposure_minutes: 10,
+      confidence: "high",
+      route_index: 1
     }
 
     TripCache.set(
       source: "21.1702,72.8311",
       destination: "23.0225,72.5714",
       departure_time: "2026-06-10",
-      recommendation_hash: rec_hash
+      route_index: 0,
+      recommendation_hash: rec_hash1
     )
 
-    # Verify key was written and value was serialized
-    assert_equal 1, store.size
-
-    cached = TripCache.get(
+    TripCache.set(
       source: "21.1702,72.8311",
       destination: "23.0225,72.5714",
-      departure_time: "2026-06-10"
+      departure_time: "2026-06-10",
+      route_index: 1,
+      recommendation_hash: rec_hash2
     )
 
-    assert_equal "left", cached[:recommended_side]
-    assert_equal 15, cached[:left_exposure_minutes]
-    assert_equal 72, cached[:right_exposure_minutes]
-    assert_equal "high", cached[:confidence]
+    # Verify both keys were written
+    assert_equal 2, store.size
+
+    cached1 = TripCache.get(
+      source: "21.1702,72.8311",
+      destination: "23.0225,72.5714",
+      departure_time: "2026-06-10",
+      route_index: 0
+    )
+
+    cached2 = TripCache.get(
+      source: "21.1702,72.8311",
+      destination: "23.0225,72.5714",
+      departure_time: "2026-06-10",
+      route_index: 1
+    )
+
+    assert_equal "left", cached1[:recommended_side]
+    assert_equal 0, cached1[:route_index]
+
+    assert_equal "right", cached2[:recommended_side]
+    assert_equal 1, cached2[:route_index]
   end
 
   def test_get_fails_open_returning_nil_on_redis_connection_error

@@ -135,6 +135,7 @@ class App < Roda
       log_payload[:source] = @source if @source
       log_payload[:destination] = @destination if @destination
       log_payload[:error] = @error if @error
+      log_payload[:params] = r.params if r.params && !r.params.empty?
 
       puts Oj.dump(log_payload, mode: :compat)
     end

@@ -15,7 +15,7 @@ class TripAnalyzerService
     )
 
     # 2. Extract RouteStep models from Google Directions data
-    steps = self.class.extract_steps(directions_data)
+    steps = self.class.extract_steps(directions_data, trip_request.route_index)
 
     # 3. Analyze route steps and accumulate exposure
     exposure = RouteAnalyzerService.analyze(
@@ -28,22 +28,23 @@ class TripAnalyzerService
       left_exposure_seconds: exposure[:left_exposure_seconds],
       right_exposure_seconds: exposure[:right_exposure_seconds],
       is_entirely_night: exposure[:is_entirely_night],
-      steps: exposure[:steps]
+      steps: exposure[:steps],
+      route_index: trip_request.route_index
     )
   end
 
   # Extractor helper to map Google Maps JSON output structure to our RouteStep models.
   # Subdivides steps using encoded polylines to detect curves and merges straight segments.
-  def self.extract_steps(data)
+  def self.extract_steps(data, route_index = 0)
     routes = data[:routes]
     if routes.nil? || routes.empty?
       raise InvalidRouteError, "Google Directions response did not contain any routes"
     end
 
     steps = []
-    # Analyze the primary/first route returned
-    primary_route = routes[0]
-    legs = primary_route[:legs] || []
+    # Analyze the requested route (fallback to index 0 if out of bounds)
+    selected_route = routes[route_index] || routes[0]
+    legs = selected_route[:legs] || []
 
     legs.each do |leg|
       leg_steps = leg[:steps] || []

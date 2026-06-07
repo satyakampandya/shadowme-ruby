@@ -20,6 +20,7 @@ class App
           destination = validation_result[:destination]
           departure_time_str = validation_result[:departure_time]
           departure_time = Time.parse(departure_time_str)
+          route_index = validation_result[:route_index] || 0
 
           # Store context for structured logging
           @source = source
@@ -29,7 +30,8 @@ class App
           cached = TripCache.get(
             source: source,
             destination: destination,
-            departure_time: departure_time
+            departure_time: departure_time,
+            route_index: route_index
           )
 
           if cached
@@ -37,6 +39,12 @@ class App
             response.status = 200
             response['Content-Type'] = 'application/json'
             response['X-Cache'] = 'HIT'
+            
+            # Ensure route_index is included in the returned cache response if available
+            if cached.is_a?(Hash) && !cached.key?(:route_index) && !cached.key?("route_index") && route_index
+              cached[:route_index] = route_index
+            end
+
             r.halt(200, Oj.dump(cached, mode: :compat))
           end
 
@@ -44,7 +52,8 @@ class App
           trip_request = TripRequest.new(
             source: source,
             destination: destination,
-            departure_time: departure_time
+            departure_time: departure_time,
+            route_index: route_index
           )
 
           analyzer = TripAnalyzerService.new
@@ -58,6 +67,7 @@ class App
             source: source,
             destination: destination,
             departure_time: departure_time,
+            route_index: route_index,
             recommendation_hash: result_hash
           )
 
