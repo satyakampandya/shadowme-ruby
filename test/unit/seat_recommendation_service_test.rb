@@ -43,12 +43,34 @@ class SeatRecommendationServiceTest < Minitest::Test
   end
 
   def test_recommends_either_when_entirely_night
-    rec = SeatRecommendationService.recommend(left_exposure_seconds: 0, right_exposure_seconds: 0, is_entirely_night: true)
+    rec = SeatRecommendationService.recommend(
+      left_exposure_seconds: 0,
+      right_exposure_seconds: 0,
+      night_exposure_seconds: 3600,
+      is_entirely_night: true
+    )
 
     assert_equal "either", rec.recommended_side
     assert_equal 0, rec.left_exposure_minutes
     assert_equal 0, rec.right_exposure_minutes
+    assert_equal 60, rec.night_exposure_minutes
     assert_equal "high", rec.confidence
     assert_equal "It is night time, enjoy your journey!", rec.message
+  end
+
+  def test_handles_partial_night_time
+    rec = SeatRecommendationService.recommend(
+      left_exposure_seconds: 900,
+      right_exposure_seconds: 2700,
+      night_exposure_seconds: 1800,
+      is_entirely_night: false
+    )
+
+    assert_equal "left", rec.recommended_side
+    assert_equal 15, rec.left_exposure_minutes
+    assert_equal 45, rec.right_exposure_minutes
+    assert_equal 30, rec.night_exposure_minutes
+    assert_equal "high", rec.confidence
+    assert_equal "You should sit on the left side of the vehicle to minimize direct sunlight exposure.", rec.message
   end
 end

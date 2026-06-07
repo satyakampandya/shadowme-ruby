@@ -252,6 +252,7 @@ class ApiEndpointsTest < Minitest::Test
     assert_equal "either", body[:recommended_side]
     assert_equal 0, body[:left_exposure_minutes]
     assert_equal 0, body[:right_exposure_minutes]
+    assert_equal 5, body[:night_exposure_minutes]
     assert_equal "high", body[:confidence]
     assert_equal "It is night time, enjoy your journey!", body[:message]
   end

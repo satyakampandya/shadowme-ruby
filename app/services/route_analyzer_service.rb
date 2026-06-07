@@ -47,6 +47,7 @@ class RouteAnalyzerService
 
     left_exposure_seconds = 0
     right_exposure_seconds = 0
+    night_exposure_seconds = 0
     accumulated_duration_seconds = 0
     night_steps_count = 0
     steps_details = []
@@ -61,6 +62,7 @@ class RouteAnalyzerService
       # If the sun is at or below the horizon, it is night time for this step
       if analysis[:sun_position].elevation <= 0.0
         night_steps_count += 1
+        night_exposure_seconds += step.duration
       else
         case analysis[:sun_side]
         when :left
@@ -92,6 +94,7 @@ class RouteAnalyzerService
     {
       left_exposure_seconds: left_exposure_seconds,
       right_exposure_seconds: right_exposure_seconds,
+      night_exposure_seconds: night_exposure_seconds,
       is_entirely_night: (night_steps_count == processed_steps.size),
       steps: steps_details
     }

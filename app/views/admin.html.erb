@@ -506,12 +506,13 @@
           <div class="exposure-breakdown">
             <div class="exposure-labels">
               <span class="lbl-left" id="exposure-lbl-left">Left: 0m</span>
+              <span class="lbl-neutral" id="exposure-lbl-neutral" style="color: #10b981; font-weight: 600;">Night: 0m</span>
               <span class="lbl-right" id="exposure-lbl-right">Right: 0m</span>
             </div>
             <div class="exposure-bar-container">
               <div class="bar-left" id="bar-left" style="width: 0%"></div>
-              <div class="bar-right" id="bar-right" style="width: 0%"></div>
               <div class="bar-neutral" id="bar-neutral" style="width: 0%"></div>
+              <div class="bar-right" id="bar-right" style="width: 0%"></div>
             </div>
           </div>
 
@@ -829,6 +830,33 @@
       }
     }
 
+    function formatDuration(minutes) {
+      if (minutes <= 0) return '0m';
+      
+      const days = Math.floor(minutes / 1440);
+      const hours = Math.floor((minutes % 1440) / 60);
+      const mins = minutes % 60;
+      
+      let parts = [];
+      if (days > 0) {
+        parts.push(`${days}d`);
+        if (hours > 0 || mins > 0) {
+          parts.push(`${hours}h`);
+        }
+        if (mins > 0) {
+          parts.push(`${mins}m`);
+        }
+      } else if (hours > 0) {
+        parts.push(`${hours}h`);
+        if (mins > 0) {
+          parts.push(`${mins}m`);
+        }
+      } else {
+        parts.push(`${mins}m`);
+      }
+      return parts.join(' ');
+    }
+
     function renderResult(data, isCacheHit) {
       document.getElementById('placeholder-state').style.display = 'none';
       const content = document.getElementById('result-content');
@@ -925,32 +953,36 @@
                 }]
               });
               sunRayLines.push(sunRay);
-
-              // Add hover popover detailing the metrics at this checkpoint
-              const contentString = `
-                <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4;">
-                  <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
-                  <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
-                  <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
-                  <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
-                  <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
-                  <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${markerColor === "#eab308" ? "#b45309" : markerColor};">${step.sun_side}</span>
-                </div>
-              `;
-
-              const infoWindow = new google.maps.InfoWindow({
-                content: contentString
-              });
-
-              marker.addListener('mouseover', () => {
-                infoWindow.open(map, marker);
-              });
-
-              marker.addListener('mouseout', () => {
-                infoWindow.close();
-              });
             }
           }
+
+          // Add hover popover detailing the metrics at this checkpoint
+          const isNight = isNaN(sunElev) || sunElev <= 0;
+          const displaySide = isNight ? 'night' : step.sun_side;
+          const displayColor = isNight ? '#9ca3af' : (markerColor === "#eab308" ? "#b45309" : markerColor);
+
+          const contentString = `
+            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px; line-height: 1.4;">
+              <strong style="display: block; margin-bottom: 4px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Checkpoint ${index + 1}</strong>
+              <b>Time:</b> ${new Date(step.midpoint_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br/>
+              <b>Bearing (Heading):</b> ${Math.round(step.bearing)}°<br/>
+              <b>Sun Azimuth:</b> ${Math.round(step.sun_azimuth)}°<br/>
+              <b>Sun Elevation:</b> ${Math.round(step.sun_elevation)}°<br/>
+              <b>Sun Side Exposure:</b> <span style="font-weight: bold; text-transform: uppercase; color: ${displayColor};">${displaySide}</span>
+            </div>
+          `;
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: contentString
+          });
+
+          marker.addListener('mouseover', () => {
+            infoWindow.open(map, marker);
+          });
+
+          marker.addListener('mouseout', () => {
+            infoWindow.close();
+          });
         });
       }
 
@@ -966,28 +998,25 @@
       // Update exposure bar & labels
       const leftMin = data.left_exposure_minutes || 0;
       const rightMin = data.right_exposure_minutes || 0;
+      const nightMin = data.night_exposure_minutes || 0;
       
-      document.getElementById('exposure-lbl-left').textContent = `Left: ${leftMin}m`;
-      document.getElementById('exposure-lbl-right').textContent = `Right: ${rightMin}m`;
+      document.getElementById('exposure-lbl-left').textContent = `Left: ${formatDuration(leftMin)}`;
+      document.getElementById('exposure-lbl-neutral').textContent = `Night: ${formatDuration(nightMin)}`;
+      document.getElementById('exposure-lbl-right').textContent = `Right: ${formatDuration(rightMin)}`;
 
       const barLeft = document.getElementById('bar-left');
       const barRight = document.getElementById('bar-right');
       const barNeutral = document.getElementById('bar-neutral');
 
-      if (data.recommended_side === 'either') {
+      const total = leftMin + rightMin + nightMin;
+      if (total === 0) {
         barLeft.style.width = '0%';
         barRight.style.width = '0%';
         barNeutral.style.width = '100%';
       } else {
-        barNeutral.style.width = '0%';
-        const total = leftMin + rightMin;
-        if (total === 0) {
-          barLeft.style.width = '50%';
-          barRight.style.width = '50%';
-        } else {
-          barLeft.style.width = `${(leftMin / total) * 100}%`;
-          barRight.style.width = `${(rightMin / total) * 100}%`;
-        }
+        barLeft.style.width = `${(leftMin / total) * 100}%`;
+        barNeutral.style.width = `${(nightMin / total) * 100}%`;
+        barRight.style.width = `${(rightMin / total) * 100}%`;
       }
 
       // Update confidence

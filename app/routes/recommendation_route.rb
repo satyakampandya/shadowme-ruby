@@ -40,9 +40,14 @@ class App
             response['Content-Type'] = 'application/json'
             response['X-Cache'] = 'HIT'
             
-            # Ensure route_index is included in the returned cache response if available
-            if cached.is_a?(Hash) && !cached.key?(:route_index) && !cached.key?("route_index") && route_index
-              cached[:route_index] = route_index
+            # Ensure route_index and night_exposure_minutes are included in the cache hit
+            if cached.is_a?(Hash)
+              if !cached.key?(:route_index) && !cached.key?("route_index") && route_index
+                cached[:route_index] = route_index
+              end
+              if !cached.key?(:night_exposure_minutes) && !cached.key?("night_exposure_minutes")
+                cached[:night_exposure_minutes] = 0
+              end
             end
 
             r.halt(200, Oj.dump(cached, mode: :compat))

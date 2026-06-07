@@ -3,21 +3,28 @@ class SeatRecommendationService
   # left_exposure_seconds: total exposure seconds on the left side
   # right_exposure_seconds: total exposure seconds on the right side
   # Returns a SeatRecommendation model.
-  def self.recommend(left_exposure_seconds:, right_exposure_seconds:, is_entirely_night: false, steps: [], route_index: nil)
+  def self.recommend(left_exposure_seconds:, right_exposure_seconds:, night_exposure_seconds: 0, is_entirely_night: false, steps: [], route_index: nil)
+    left_seconds = left_exposure_seconds.to_f
+    right_seconds = right_exposure_seconds.to_f
+    night_seconds = night_exposure_seconds.to_f
+
+    # Convert to minutes and round to the nearest integer for serialization
+    left_minutes = (left_seconds / 60.0).round
+    right_minutes = (right_seconds / 60.0).round
+    night_minutes = (night_seconds / 60.0).round
+
     if is_entirely_night
       return SeatRecommendation.new(
         recommended_side: :either,
         left_exposure_minutes: 0,
         right_exposure_minutes: 0,
         confidence: :high,
+        night_exposure_minutes: night_minutes,
         message: "It is night time, enjoy your journey!",
         steps: steps,
         route_index: route_index
       )
     end
-
-    left_seconds = left_exposure_seconds.to_f
-    right_seconds = right_exposure_seconds.to_f
 
     # "The recommended side is the side receiving less sunlight."
     # If they are equal, it defaults to :right as per the `<` comparison.
@@ -44,10 +51,6 @@ class SeatRecommendationService
                    end
                  end
 
-    # Convert to minutes and round to the nearest integer for serialization
-    left_minutes = (left_seconds / 60.0).round
-    right_minutes = (right_seconds / 60.0).round
-
     message = "You should sit on the #{recommended_side} side of the vehicle to minimize direct sunlight exposure."
 
     SeatRecommendation.new(
@@ -55,6 +58,7 @@ class SeatRecommendationService
       left_exposure_minutes: left_minutes,
       right_exposure_minutes: right_minutes,
       confidence: confidence,
+      night_exposure_minutes: night_minutes,
       message: message,
       steps: steps,
       route_index: route_index
