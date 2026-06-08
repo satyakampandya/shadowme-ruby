@@ -31,6 +31,24 @@ class TripCacheTest < Minitest::Test
     assert_equal key1, key2
   end
 
+  def test_generate_key_differs_by_include_steps
+    key_without_steps = TripCache.generate_key(
+      source: "21.1702,72.8311",
+      destination: "23.0225,72.5714",
+      departure_time: "2026-06-10T08:00:00+05:30",
+      include_steps: false
+    )
+
+    key_with_steps = TripCache.generate_key(
+      source: "21.1702,72.8311",
+      destination: "23.0225,72.5714",
+      departure_time: "2026-06-10T08:00:00+05:30",
+      include_steps: true
+    )
+
+    refute_equal key_without_steps, key_with_steps
+  end
+
   def test_get_and_set_operations_serialize_and_deserialize_correctly
     store = {}
     

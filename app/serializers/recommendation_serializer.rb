@@ -2,7 +2,7 @@ require 'oj'
 
 class RecommendationSerializer
   # Converts SeatRecommendation model to a Hash.
-  def self.to_hash(recommendation)
+  def self.to_hash(recommendation, include_steps: false)
     hash = {
       recommended_side: recommendation.recommended_side,
       left_exposure_minutes: recommendation.left_exposure_minutes,
@@ -12,13 +12,15 @@ class RecommendationSerializer
       confidence: recommendation.confidence
     }
     hash[:message] = recommendation.message if recommendation.message
-    hash[:steps] = recommendation.steps if recommendation.steps && !recommendation.steps.empty?
+    if include_steps && recommendation.steps && !recommendation.steps.empty?
+      hash[:steps] = recommendation.steps
+    end
     hash[:route_index] = recommendation.route_index if recommendation.respond_to?(:route_index) && !recommendation.route_index.nil?
     hash
   end
 
   # Converts SeatRecommendation model to a JSON string using Oj.
-  def self.serialize(recommendation)
-    Oj.dump(to_hash(recommendation), mode: :compat)
+  def self.serialize(recommendation, include_steps: false)
+    Oj.dump(to_hash(recommendation, include_steps: include_steps), mode: :compat)
   end
 end

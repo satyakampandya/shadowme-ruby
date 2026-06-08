@@ -7,11 +7,11 @@ class TripCache
   TTL = 86_400
 
   # Fetches cached recommendation if available, otherwise returns nil.
-  def self.get(source:, destination:, departure_time:, route_index: 0)
+  def self.get(source:, destination:, departure_time:, route_index: 0, include_steps: false)
     client = redis_client
     return nil unless client
 
-    key = generate_key(source: source, destination: destination, departure_time: departure_time, route_index: route_index)
+    key = generate_key(source: source, destination: destination, departure_time: departure_time, route_index: route_index, include_steps: include_steps)
     cached_data = client.get(key)
     
     if cached_data
@@ -24,11 +24,11 @@ class TripCache
   end
 
   # Caches a recommendation hash.
-  def self.set(source:, destination:, departure_time:, route_index: 0, recommendation_hash:)
+  def self.set(source:, destination:, departure_time:, route_index: 0, include_steps: false, recommendation_hash:)
     client = redis_client
     return unless client
 
-    key = generate_key(source: source, destination: destination, departure_time: departure_time, route_index: route_index)
+    key = generate_key(source: source, destination: destination, departure_time: departure_time, route_index: route_index, include_steps: include_steps)
     serialized = Oj.dump(recommendation_hash, mode: :compat)
     
     client.setex(key, TTL, serialized)
@@ -38,13 +38,13 @@ class TripCache
   end
 
   # Helper to generate a unique cache key based on route inputs
-  def self.generate_key(source:, destination:, departure_time:, route_index: 0)
+  def self.generate_key(source:, destination:, departure_time:, route_index: 0, include_steps: false)
     normalized_source = source.to_s.strip.downcase
     normalized_destination = destination.to_s.strip.downcase
     # Standardize departure_time to string
     normalized_time = departure_time.to_s
 
-    raw_string = "#{normalized_source}|#{normalized_destination}|#{normalized_time}|#{route_index || 0}"
+    raw_string = "#{normalized_source}|#{normalized_destination}|#{normalized_time}|#{route_index || 0}|#{include_steps ? '1' : '0'}"
     hash = Digest::SHA256.hexdigest(raw_string)
     "shadowme:recommendation:#{hash}"
   end

@@ -20,7 +20,8 @@ class TripAnalyzerService
     # 3. Analyze route steps and accumulate exposure
     exposure = RouteAnalyzerService.analyze(
       steps: steps,
-      departure_time: trip_request.departure_time
+      departure_time: trip_request.departure_time,
+      include_steps: trip_request.include_steps
     )
 
     # 4. Generate final recommendation

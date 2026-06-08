@@ -21,6 +21,7 @@ class App
           departure_time_str = validation_result[:departure_time]
           departure_time = Time.parse(departure_time_str)
           route_index = validation_result[:route_index] || 0
+          include_steps = validation_result[:include_steps] == true
 
           # Store context for structured logging
           @source = source
@@ -31,7 +32,8 @@ class App
             source: source,
             destination: destination,
             departure_time: departure_time,
-            route_index: route_index
+            route_index: route_index,
+            include_steps: include_steps
           )
 
           if cached
@@ -58,14 +60,15 @@ class App
             source: source,
             destination: destination,
             departure_time: departure_time,
-            route_index: route_index
+            route_index: route_index,
+            include_steps: include_steps
           )
 
           analyzer = TripAnalyzerService.new
           recommendation = analyzer.analyze(trip_request)
 
           # 4. Serialize the recommendation model
-          result_hash = RecommendationSerializer.to_hash(recommendation)
+          result_hash = RecommendationSerializer.to_hash(recommendation, include_steps: include_steps)
 
           # 5. Populate Cache
           TripCache.set(
@@ -73,6 +76,7 @@ class App
             destination: destination,
             departure_time: departure_time,
             route_index: route_index,
+            include_steps: include_steps,
             recommendation_hash: result_hash
           )
 

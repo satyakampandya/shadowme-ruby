@@ -7,6 +7,7 @@ class RecommendationValidator < Dry::Validation::Contract
     required(:destination).filled(:string)
     required(:departure_time).filled(:string)
     optional(:route_index).filled(:integer, gteq?: 0)
+    optional(:include_steps).maybe(:bool)
   end
 
   rule(:departure_time) do

@@ -52,6 +52,14 @@
           <input type="text" id="departure-input" placeholder="Select Departure Date & Time..." required>
         </div>
 
+        <div class="form-group toggle-group">
+          <label class="toggle-switch">
+            <input type="checkbox" id="include-steps-checkbox" checked onchange="resetStateAndResults(); updateMapRoute();">
+            <span class="slider"></span>
+          </label>
+          <label for="include-steps-checkbox" class="toggle-label">Include Route Details (Timeline & Map Checkpoints)</label>
+        </div>
+
         <div class="form-group" id="route-options-group" style="display: none;">
           <label>Select Route Option</label>
           <div id="route-options-list" class="route-options-list"></div>

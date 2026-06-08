@@ -412,13 +412,16 @@ async function submitForm() {
   document.getElementById('loading-state').style.display = 'block';
 
   try {
+    const includeStepsCheckbox = document.getElementById('include-steps-checkbox');
+    const includeSteps = includeStepsCheckbox ? includeStepsCheckbox.checked : false;
+
     // Fetch recommendations from API
     const response = await fetch('/api/v1/recommendation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ source, destination, departure_time, route_index: currentRouteIndex })
+      body: JSON.stringify({ source, destination, departure_time, route_index: currentRouteIndex, include_steps: includeSteps })
     });
 
     const cacheHitHeader = response.headers.get('X-Cache') === 'HIT';

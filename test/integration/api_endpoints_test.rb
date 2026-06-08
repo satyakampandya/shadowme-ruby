@@ -110,6 +110,49 @@ class ApiEndpointsTest < Minitest::Test
     assert_includes ["low", "medium", "high"], body[:confidence]
     assert_equal "You should sit on the #{body[:recommended_side]} side of the vehicle to minimize direct sunlight exposure.", body[:message]
     
+    # Assert steps are excluded by default
+    assert_nil body[:steps]
+  end
+
+  def test_recommendation_endpoint_includes_steps_when_requested
+    dep_time_secs = Time.parse("2026-06-10T08:00:00+05:30").to_i
+    mock_response = {
+      status: "OK",
+      routes: [
+        {
+          legs: [
+            {
+              steps: [
+                {
+                  distance: { value: 5000 },
+                  duration: { value: 600 },
+                  start_location: { lat: 21.17, lng: 72.83 },
+                  end_location: { lat: 21.20, lng: 72.85 }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    stub_request(:get, "https://maps.googleapis.com/maps/api/directions/json")
+      .with(query: { origin: '21.1702,72.8311', destination: '23.0225,72.5714', alternatives: 'true', key: 'test-api-key', departure_time: dep_time_secs })
+      .to_return(status: 200, body: Oj.dump(mock_response, mode: :compat), headers: { 'Content-Type' => 'application/json' })
+
+    payload = {
+      source: "21.1702,72.8311",
+      destination: "23.0225,72.5714",
+      departure_time: "2026-06-10T08:00:00+05:30",
+      include_steps: true
+    }
+
+    header 'Content-Type', 'application/json'
+    post '/api/v1/recommendation', Oj.dump(payload, mode: :compat)
+
+    assert_equal 200, last_response.status
+    body = Oj.load(last_response.body, symbol_keys: true)
+
     assert_kind_of Array, body[:steps]
     refute_empty body[:steps]
     step_detail = body[:steps].first

@@ -6,7 +6,7 @@ class RouteAnalyzerService
   # steps: Array of RouteStep models
   # departure_time: Time object of the departure time
   # Returns: Hash containing total left and right exposure in seconds
-  def self.analyze(steps:, departure_time:)
+  def self.analyze(steps:, departure_time:, include_steps: false)
     processed_steps = []
 
     steps.each do |step|
@@ -75,21 +75,23 @@ class RouteAnalyzerService
         end
       end
 
-      steps_details << {
-        start_lat: step.start_lat.to_f,
-        start_lng: step.start_lng.to_f,
-        end_lat: step.end_lat.to_f,
-        end_lng: step.end_lng.to_f,
-        duration: step.duration.to_i,
-        distance: step.distance.to_i,
-        midpoint_lat: analysis[:midpoint_lat].to_f,
-        midpoint_lng: analysis[:midpoint_lng].to_f,
-        midpoint_time: analysis[:midpoint_time].iso8601,
-        bearing: analysis[:bearing].to_f,
-        sun_azimuth: analysis[:sun_position].azimuth.to_f,
-        sun_elevation: analysis[:sun_position].elevation.to_f,
-        sun_side: analysis[:sun_side].to_s
-      }
+      if include_steps
+        steps_details << {
+          start_lat: step.start_lat.to_f,
+          start_lng: step.start_lng.to_f,
+          end_lat: step.end_lat.to_f,
+          end_lng: step.end_lng.to_f,
+          duration: step.duration.to_i,
+          distance: step.distance.to_i,
+          midpoint_lat: analysis[:midpoint_lat].to_f,
+          midpoint_lng: analysis[:midpoint_lng].to_f,
+          midpoint_time: analysis[:midpoint_time].iso8601,
+          bearing: analysis[:bearing].to_f,
+          sun_azimuth: analysis[:sun_position].azimuth.to_f,
+          sun_elevation: analysis[:sun_position].elevation.to_f,
+          sun_side: analysis[:sun_side].to_s
+        }
+      end
 
       accumulated_duration_seconds += step.duration
     end
