@@ -8,7 +8,6 @@ AGENTS.md
 # Ignore local dependency bundles and ruby environments
 .bundle/
 vendor/bundle/
-Gemfile.lock
 /tmp/
 /log/
 *.gem
