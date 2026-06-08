@@ -119,7 +119,8 @@ Checks system dependencies (Redis connectivity and Google API environment variab
   ```
 
 ### 3. Get Seat Recommendation
-Calculates the optimal side to sit on.
+Calculates the optimal side to sit on. By default, internal debug steps and route geometries are omitted from the response to optimize payload size and cache memory. To request detailed route step coordinates, bearings, and sun positions, set `"include_steps": true`.
+
 - **URL**: `/api/v1/recommendation`
 - **Method**: `POST`
 - **Headers**: `Content-Type: application/json`
@@ -128,17 +129,52 @@ Calculates the optimal side to sit on.
   {
     "source": "21.1702,72.8311",
     "destination": "23.0225,72.5714",
-    "departure_time": "2026-06-10T08:00:00+05:30"
+    "departure_time": "2026-06-10T08:00:00+05:30",
+    "include_steps": false,
+    "route_index": 0
   }
   ```
-- **Response (200 OK - Daytime Trip)**:
+- **Response (200 OK - Default/Simple Response)**:
   ```json
   {
     "recommended_side": "left",
     "left_exposure_minutes": 15,
     "right_exposure_minutes": 72,
+    "night_exposure_minutes": 0,
+    "front_behind_exposure_minutes": 0,
     "confidence": "high",
     "message": "You should sit on the left side of the vehicle to minimize direct sunlight exposure."
+  }
+  ```
+
+- **Response (200 OK - With Detailed Steps `include_steps: true`)**:
+  ```json
+  {
+    "recommended_side": "left",
+    "left_exposure_minutes": 15,
+    "right_exposure_minutes": 72,
+    "night_exposure_minutes": 0,
+    "front_behind_exposure_minutes": 0,
+    "confidence": "high",
+    "message": "You should sit on the left side of the vehicle to minimize direct sunlight exposure.",
+    "steps": [
+      {
+        "start_lat": 21.1702,
+        "start_lng": 72.8311,
+        "end_lat": 21.2015,
+        "end_lng": 72.8532,
+        "duration": 600,
+        "distance": 5000,
+        "midpoint_lat": 21.18585,
+        "midpoint_lng": 72.84215,
+        "midpoint_time": "2026-06-10T08:05:00+05:30",
+        "bearing": 30.5,
+        "sun_azimuth": 110.5,
+        "sun_elevation": 42.3,
+        "sun_side": "right"
+      }
+    ],
+    "route_index": 0
   }
   ```
 
@@ -148,6 +184,8 @@ Calculates the optimal side to sit on.
     "recommended_side": "either",
     "left_exposure_minutes": 0,
     "right_exposure_minutes": 0,
+    "night_exposure_minutes": 180,
+    "front_behind_exposure_minutes": 0,
     "confidence": "high",
     "message": "It is night time, enjoy your journey!"
   }

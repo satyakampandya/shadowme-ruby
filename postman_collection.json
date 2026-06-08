@@ -86,6 +86,41 @@
 					"response": []
 				},
 				{
+					"name": "Get Recommendation (With Route Steps)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"source\": \"21.1702,72.8311\",\n  \"destination\": \"23.0225,72.5714\",\n  \"departure_time\": \"2026-06-10T08:00:00+05:30\",\n  \"include_steps\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/recommendation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"recommendation"
+							]
+						},
+						"description": "Computes seat side recommendation with detailed steps data included in the response."
+					},
+					"response": []
+				},
+				{
 					"name": "Get Recommendation (Night-time Trip)",
 					"request": {
 						"method": "POST",

@@ -54,7 +54,7 @@ class TripCacheTest < Minitest::Test
     
     # Setup mock store operations
     @mock_redis.define_singleton_method(:get) { |k| store[k] }
-    @mock_redis.define_singleton_method(:setex) { |k, ttl, v| store[k] = v }
+    @mock_redis.define_singleton_method(:setex) { |k, _ttl, v| store[k] = v }
 
     rec_hash1 = {
       recommended_side: "left",

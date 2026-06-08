@@ -6,6 +6,6 @@ class TripRequest
     @destination = destination
     @departure_time = departure_time
     @route_index = route_index || 0
-    @include_steps = include_steps == true
+    @include_steps = include_steps
   end
 end

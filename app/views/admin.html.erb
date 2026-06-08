@@ -113,10 +113,10 @@
             <span class="lbl-right" id="exposure-lbl-right">Right: 0m</span>
           </div>
           <div class="exposure-bar-container">
-            <div class="bar-left" id="bar-left" style="width: 0%"></div>
-            <div class="bar-front-behind" id="bar-front-behind" style="width: 0%"></div>
-            <div class="bar-neutral" id="bar-neutral" style="width: 0%"></div>
-            <div class="bar-right" id="bar-right" style="width: 0%"></div>
+            <div class="bar-left" id="bar-left" style="width: 0"></div>
+            <div class="bar-front-behind" id="bar-front-behind" style="width: 0"></div>
+            <div class="bar-neutral" id="bar-neutral" style="width: 0"></div>
+            <div class="bar-right" id="bar-right" style="width: 0"></div>
           </div>
         </div>
 
@@ -139,7 +139,7 @@
             </h4>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <div class="sim-speed-control" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
-                <span>Speed:</span>
+                <label for="sim-speed-select">Speed:</label>
                 <select id="sim-speed-select" onchange="updateSimulationSpeed();" style="background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 6px; color: var(--text-color); font-size: 0.75rem; padding: 0.2rem 0.4rem; cursor: pointer; outline: none; transition: border-color 0.2s ease;">
                   <option value="0.5">0.5x</option>
                   <option value="1" selected>1x</option>
