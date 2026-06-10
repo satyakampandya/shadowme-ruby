@@ -8,17 +8,6 @@ class ApiEndpointsTest < Minitest::Test
     App
   end
 
-  def with_stubbed_redis(client)
-    # Dynamically override the class method on TripCache without redefinition warnings
-    TripCache.singleton_class.send(:remove_method, :redis_client) if TripCache.respond_to?(:redis_client)
-    TripCache.define_singleton_method(:redis_client) { client }
-    yield
-  ensure
-    # Restore the default mocked nil behavior
-    TripCache.singleton_class.send(:remove_method, :redis_client) if TripCache.respond_to?(:redis_client)
-    TripCache.define_singleton_method(:redis_client) { nil }
-  end
-
   def test_health_endpoint
     get '/health'
 
@@ -28,40 +17,28 @@ class ApiEndpointsTest < Minitest::Test
   end
 
   def test_readiness_endpoint_configured
-    with_stubbed_redis(Object.new) do
-      get '/ready'
-
-      assert_equal 200, last_response.status
-      body = Oj.load(last_response.body, symbol_keys: true)
-      assert_equal "ready", body[:status]
-    end
-  end
-
-  def test_readiness_endpoint_failing_when_redis_is_missing
-    # redis_client is nil by default in test_helper
     get '/ready'
 
-    assert_equal 503, last_response.status
+    assert_equal 200, last_response.status
     body = Oj.load(last_response.body, symbol_keys: true)
-    assert_equal "not_ready", body[:status]
-    assert_equal "failed", body[:checks][:redis]
+    assert_equal "ready", body[:status]
+    assert_equal "configured", body[:checks][:google_api]
   end
 
   def test_readiness_endpoint_failing_when_api_key_is_missing
     original_key = ENV['GOOGLE_MAPS_API_KEY']
     ENV['GOOGLE_MAPS_API_KEY'] = nil
 
-    with_stubbed_redis(Object.new) do
+    begin
       get '/ready'
 
       assert_equal 503, last_response.status
       body = Oj.load(last_response.body, symbol_keys: true)
       assert_equal "not_ready", body[:status]
       assert_equal "missing", body[:checks][:google_api]
-      assert_equal "ok", body[:checks][:redis]
+    ensure
+      ENV['GOOGLE_MAPS_API_KEY'] = original_key
     end
-  ensure
-    ENV['GOOGLE_MAPS_API_KEY'] = original_key
   end
 
   def test_recommendation_endpoint_success
@@ -231,38 +208,6 @@ class ApiEndpointsTest < Minitest::Test
     assert_match(/Google Maps API error/, body[:error])
   end
 
-  def test_recommendation_endpoint_cache_hit
-    payload = {
-      source: "21.1702,72.8311",
-      destination: "23.0225,72.5714",
-      departure_time: "2026-06-10T08:00:00+05:30",
-      route_index: 2
-    }
-
-    cached_response = {
-      recommended_side: "right",
-      left_exposure_minutes: 40,
-      right_exposure_minutes: 10,
-      confidence: "high"
-    }
-
-    mock_redis = Object.new
-    mock_redis.define_singleton_method(:get) { |_k| Oj.dump(cached_response, mode: :compat) }
-
-    with_stubbed_redis(mock_redis) do
-      header 'Content-Type', 'application/json'
-      post '/api/v1/recommendation', Oj.dump(payload, mode: :compat)
-
-      assert_equal 200, last_response.status
-      body = Oj.load(last_response.body, symbol_keys: true)
-
-      assert_equal "right", body[:recommended_side]
-      assert_equal 40, body[:left_exposure_minutes]
-      assert_equal 10, body[:right_exposure_minutes]
-      assert_equal "high", body[:confidence]
-      assert_equal 2, body[:route_index]
-    end
-  end
 
   def test_recommendation_endpoint_entirely_night
     payload = {

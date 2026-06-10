@@ -17,16 +17,6 @@ WebMock.disable_net_connect!(allow_localhost: true)
 # Require main application (which loads the shadowme gem code)
 require_relative '../app'
 
-# Mock ShadowMe::TripCache Redis connection by default to make tests self-contained
-module ShadowMe
-  class TripCache
-    singleton_class.send(:remove_method, :redis_client) if respond_to?(:redis_client)
-    def self.redis_client
-      nil
-    end
-  end
-end
-
 # Alias namespaced constants to global namespace for test suite compatibility
 ValidationError = ShadowMe::ValidationError
 InvalidRouteError = ShadowMe::InvalidRouteError
@@ -45,6 +35,5 @@ SeatRecommendationService = ShadowMe::SeatRecommendationService
 StepAnalyzerService = ShadowMe::StepAnalyzerService
 SunPositionService = ShadowMe::SunPositionService
 TripAnalyzerService = ShadowMe::TripAnalyzerService
-TripCache = ShadowMe::TripCache
 AdminView = ShadowMe::AdminView
 GoogleMapsClient = ShadowMe::GoogleMapsClient

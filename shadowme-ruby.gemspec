@@ -3,7 +3,7 @@ Gem::Specification.new do |spec|
   spec.version       = "0.1.0"
   spec.authors       = ["Satyakam Pandya"]
   spec.email         = ["satyakampandya@gmail.com"]
-  spec.summary       = "Simplify travel planning and select the optimal seat for protection from sunlight"
+  spec.summary       = "Core route sunlight exposure calculation engine for ShadowMe"
   spec.require_paths = ["lib"]
 
   # Package all ruby files inside lib and standard documentation files
@@ -15,5 +15,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-validation", "~> 1.10"
   spec.add_dependency "sun_calc", "~> 1.1"
   spec.add_dependency "zeitwerk", "~> 2.6"
-  spec.add_dependency "redis", "~> 5.0"
 end

@@ -8,7 +8,6 @@ gem 'faraday'
 gem 'zeitwerk'
 gem 'dry-validation'
 gem 'oj'
-gem 'redis'
 gem 'sun_calc'
 
 group :development, :test do

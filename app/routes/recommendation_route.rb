@@ -27,35 +27,7 @@ class App
           @source = source
           @destination = destination
 
-          # 2. Check cache (fail open if Redis is down)
-          cached = ShadowMe::TripCache.get(
-            source: source,
-            destination: destination,
-            departure_time: departure_time,
-            route_index: route_index,
-            include_steps: include_steps
-          )
-
-          if cached
-            @cache_hit = true
-            response.status = 200
-            response['Content-Type'] = 'application/json'
-            response['X-Cache'] = 'HIT'
-            
-            # Ensure route_index and night_exposure_minutes are included in the cache hit
-            if cached.is_a?(Hash)
-              if !cached.key?(:route_index) && !cached.key?("route_index") && route_index
-                cached[:route_index] = route_index
-              end
-              if !cached.key?(:night_exposure_minutes) && !cached.key?("night_exposure_minutes")
-                cached[:night_exposure_minutes] = 0
-              end
-            end
-
-            r.halt(200, Oj.dump(cached, mode: :compat))
-          end
-
-          # 3. Cache miss: Analyze the trip route and calculate recommendation
+          # 2. Analyze the trip route and calculate recommendation
           result_hash = ShadowMe.calculate(
             source,
             destination,
@@ -64,19 +36,8 @@ class App
             include_steps: include_steps
           )
 
-          # 4. Populate Cache
-          ShadowMe::TripCache.set(
-            source: source,
-            destination: destination,
-            departure_time: departure_time,
-            route_index: route_index,
-            include_steps: include_steps,
-            recommendation_hash: result_hash
-          )
-
           response.status = 200
           response['Content-Type'] = 'application/json'
-          response['X-Cache'] = 'MISS'
           Oj.dump(result_hash, mode: :compat)
         end
       end

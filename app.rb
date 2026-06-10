@@ -80,17 +80,15 @@ class App < Roda
 
       # 2. Readiness check endpoint (GET /ready)
       r.get 'ready' do
-        redis_ok = !ShadowMe::TripCache.redis_client.nil?
         google_api_ok = ENV['GOOGLE_MAPS_API_KEY'] && !ENV['GOOGLE_MAPS_API_KEY'].strip.empty?
 
-        status_code = (redis_ok && google_api_ok) ? 200 : 503
+        status_code = google_api_ok ? 200 : 503
         response.status = status_code
         response['Content-Type'] = 'application/json'
 
         Oj.dump({
           status: status_code == 200 ? 'ready' : 'not_ready',
           checks: {
-            redis: redis_ok ? 'ok' : 'failed',
             google_api: google_api_ok ? 'configured' : 'missing'
           }
         }, mode: :compat)
