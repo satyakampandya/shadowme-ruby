@@ -67,6 +67,16 @@ class App < Roda
     @error = nil
     @cache_hit = false
 
+    # Enable CORS for decoupled frontend development
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+
+    if r.request_method == 'OPTIONS'
+      response.status = 200
+      r.halt(200, '')
+    end
+
     begin
       # Serve static assets
       r.public

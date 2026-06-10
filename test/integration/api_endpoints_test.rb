@@ -159,6 +159,16 @@ class ApiEndpointsTest < Minitest::Test
     assert_kind_of Float, step_detail[:start_lat]
   end
 
+  def test_recommendation_endpoint_preflight_request
+    options '/api/v1/recommendation'
+    
+    assert_equal 200, last_response.status
+    assert_equal '*', last_response.headers['Access-Control-Allow-Origin']
+    assert_equal 'GET, POST, OPTIONS', last_response.headers['Access-Control-Allow-Methods']
+    assert_equal 'Content-Type, Authorization, X-Requested-With', last_response.headers['Access-Control-Allow-Headers']
+    assert_empty last_response.body
+  end
+
   def test_recommendation_endpoint_validation_errors
     payload = {
       source: "",
