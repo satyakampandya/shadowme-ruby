@@ -8,7 +8,7 @@ require 'rack/auth/basic'
 # Load the local gem code
 $LOAD_PATH.unshift(File.expand_path('../../lib', __dir__))
 require 'shadowme'
-require_relative 'app/services/admin_view'
+require_relative 'app/views/admin_view'
 
 class App < Roda
   # Wrap the Rack call method to log request details after execution is completed.
@@ -40,8 +40,6 @@ class App < Roda
     [status, headers, body]
   end
 
-  # Enable hash branches for route split
-  plugin :hash_branches
   # Enable parsing of JSON request bodies
   plugin :json_parser
   # Enable halting of requests early
@@ -133,11 +131,46 @@ class App < Roda
       end
     end
 
-    # Dispatch to branches (e.g. hash_branch('api'))
-    r.hash_branches
+    # 4. Recommendation API Route
+    r.on 'api' do
+      r.on 'v1' do
+        r.on 'recommendation' do
+          r.post do
+            # Validate parameters
+            validator = ShadowMe::RecommendationValidator.new
+            validation_result = validator.call(r.params || {})
+
+            unless validation_result.success?
+              raise ShadowMe::ValidationError.new('Validation failed', validation_result.errors.to_h)
+            end
+
+            # Extract validated parameters
+            source = validation_result[:source]
+            destination = validation_result[:destination]
+            departure_time_str = validation_result[:departure_time]
+            departure_time = Time.parse(departure_time_str)
+            route_index = validation_result[:route_index] || 0
+            include_steps = validation_result[:include_steps] == true
+
+            # Store logging context in env
+            r.env['shadowme.source'] = source
+            r.env['shadowme.destination'] = destination
+
+            # Run engine calculations
+            result_hash = ShadowMe.calculate(
+              source,
+              destination,
+              departure_time,
+              route_index: route_index,
+              include_steps: include_steps
+            )
+
+            response.status = 200
+            response['Content-Type'] = 'application/json'
+            Oj.dump(result_hash, mode: :compat)
+          end
+        end
+      end
+    end
   end
 end
-
-# Require the routes manually as Zeitwerk does not autoload files
-# that do not map to matching top-level constant definitions.
-Dir["#{__dir__}/app/routes/**/*.rb"].each { |f| require f }

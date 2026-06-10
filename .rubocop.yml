@@ -17,3 +17,10 @@ Metrics:
   Exclude:
     - 'test/**/*'
     - 'examples/web_app/test/**/*'
+    - 'examples/web_app/app.rb'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'test/**/*'
+    - 'examples/web_app/test/**/*'
+    - 'examples/web_app/app.rb'
