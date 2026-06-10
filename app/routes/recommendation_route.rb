@@ -7,12 +7,12 @@ class App
       r.on 'recommendation' do
         r.post do
           # 1. Parse and validate the incoming JSON request
-          validator = RecommendationValidator.new
+          validator = ShadowMe::RecommendationValidator.new
           # Roda's json_parser plugin populates r.params
           validation_result = validator.call(r.params || {})
 
           unless validation_result.success?
-            raise ValidationError.new("Validation failed", validation_result.errors.to_h)
+            raise ShadowMe::ValidationError.new("Validation failed", validation_result.errors.to_h)
           end
 
           # Extract validated parameters
@@ -28,7 +28,7 @@ class App
           @destination = destination
 
           # 2. Check cache (fail open if Redis is down)
-          cached = TripCache.get(
+          cached = ShadowMe::TripCache.get(
             source: source,
             destination: destination,
             departure_time: departure_time,
@@ -56,22 +56,16 @@ class App
           end
 
           # 3. Cache miss: Analyze the trip route and calculate recommendation
-          trip_request = TripRequest.new(
-            source: source,
-            destination: destination,
-            departure_time: departure_time,
+          result_hash = ShadowMe.calculate(
+            source,
+            destination,
+            departure_time,
             route_index: route_index,
             include_steps: include_steps
           )
 
-          analyzer = TripAnalyzerService.new
-          recommendation = analyzer.analyze(trip_request)
-
-          # 4. Serialize the recommendation model
-          result_hash = RecommendationSerializer.to_hash(recommendation, include_steps: include_steps)
-
-          # 5. Populate Cache
-          TripCache.set(
+          # 4. Populate Cache
+          ShadowMe::TripCache.set(
             source: source,
             destination: destination,
             departure_time: departure_time,

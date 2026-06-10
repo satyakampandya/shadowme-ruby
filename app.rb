@@ -2,22 +2,12 @@ require 'bundler/setup'
 Bundler.require(:default, ENV['RACK_ENV'] || :development)
 
 require 'securerandom'
-require 'zeitwerk'
 require 'oj'
 require 'rack/auth/basic'
 
-# Setup Zeitwerk autoloader to load the core parts of the application
-loader = Zeitwerk::Loader.new
-
-# Push subdirectories so their contents are loaded at the top-level namespace
-loader.push_dir("#{__dir__}/app/errors")
-loader.push_dir("#{__dir__}/app/models")
-loader.push_dir("#{__dir__}/app/clients")
-loader.push_dir("#{__dir__}/app/validators")
-loader.push_dir("#{__dir__}/app/serializers")
-loader.push_dir("#{__dir__}/app/services")
-
-loader.setup
+# Load the local gem code
+$LOAD_PATH.unshift(File.expand_path('lib', __dir__))
+require 'shadowme'
 
 class App < Roda
   # Enable hash branches for route split
@@ -34,11 +24,11 @@ class App < Roda
     @error = e.message
 
     status_code = case e
-                  when ValidationError
+                  when ShadowMe::ValidationError
                     400
-                  when InvalidRouteError
+                  when ShadowMe::InvalidRouteError
                     422
-                  when GoogleApiError
+                  when ShadowMe::GoogleApiError
                     502
                   else
                     500
@@ -47,9 +37,9 @@ class App < Roda
     response.status = status_code
     response['Content-Type'] = 'application/json'
 
-    error_response = if e.is_a?(ValidationError)
+    error_response = if e.is_a?(ShadowMe::ValidationError)
                        { error: e.message, validation_errors: e.errors }
-                     elsif e.is_a?(InvalidRouteError) || e.is_a?(GoogleApiError)
+                     elsif e.is_a?(ShadowMe::InvalidRouteError) || e.is_a?(ShadowMe::GoogleApiError)
                        { error: e.message }
                      else
                        # Hide standard/internal exceptions stack trace
@@ -90,7 +80,7 @@ class App < Roda
 
       # 2. Readiness check endpoint (GET /ready)
       r.get 'ready' do
-        redis_ok = !TripCache.redis_client.nil?
+        redis_ok = !ShadowMe::TripCache.redis_client.nil?
         google_api_ok = ENV['GOOGLE_MAPS_API_KEY'] && !ENV['GOOGLE_MAPS_API_KEY'].strip.empty?
 
         status_code = (redis_ok && google_api_ok) ? 200 : 503
@@ -112,7 +102,7 @@ class App < Roda
         if auth.provided? && auth.basic? && auth.credentials == ['admin', ENV['ADMIN_PASSWORD'] || 'admin123']
           response.status = 200
           response['Content-Type'] = 'text/html; charset=utf-8'
-          AdminView.render(api_key: ENV['GOOGLE_MAPS_API_KEY'] || 'test-api-key')
+          ShadowMe::AdminView.render(api_key: ENV['GOOGLE_MAPS_API_KEY'] || 'test-api-key')
         else
           response.status = 401
           response['WWW-Authenticate'] = 'Basic realm="ShadowMe Admin UI"'
@@ -125,11 +115,11 @@ class App < Roda
     rescue => e
       @error = e.message
       response.status = case e
-                        when ValidationError
+                        when ShadowMe::ValidationError
                           400
-                        when InvalidRouteError
+                        when ShadowMe::InvalidRouteError
                           422
-                        when GoogleApiError
+                        when ShadowMe::GoogleApiError
                           502
                         else
                           500
