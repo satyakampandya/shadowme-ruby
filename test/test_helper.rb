@@ -8,14 +8,17 @@ require 'minitest/reporters'
 require 'webmock/minitest'
 require 'rack/test'
 
-# Set up clean output formatting
-Minitest::Reporters.use!(Minitest::Reporters::SpecReporter.new)
+# Set up clean output formatting (suppressed inside JetBrains/RubyMine to avoid reporter conflicts)
+Minitest::Reporters.use!(Minitest::Reporters::SpecReporter.new) unless ENV['RM_INFO']
 
 # Block all external network requests during tests
 WebMock.disable_net_connect!(allow_localhost: true)
 
-# Require main application (which loads the shadowme gem code)
-require_relative '../app'
+# Ensure root lib is in the load path when running tests from subdirectories
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+# Require main application (loads the shadowme gem code)
+require 'shadowme'
 
 # Alias namespaced constants to global namespace for test suite compatibility
 ValidationError = ShadowMe::ValidationError
@@ -35,5 +38,4 @@ SeatRecommendationService = ShadowMe::SeatRecommendationService
 StepAnalyzerService = ShadowMe::StepAnalyzerService
 SunPositionService = ShadowMe::SunPositionService
 TripAnalyzerService = ShadowMe::TripAnalyzerService
-AdminView = ShadowMe::AdminView
 GoogleMapsClient = ShadowMe::GoogleMapsClient

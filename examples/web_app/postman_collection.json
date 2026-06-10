@@ -41,7 +41,7 @@
 								"ready"
 							]
 						},
-						"description": "Verifies the status of underlying components: Redis connection and Google Maps API key configuration."
+						"description": "Verifies the status of underlying components: Google Maps API key configuration."
 					},
 					"response": []
 				}

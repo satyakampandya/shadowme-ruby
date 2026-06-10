@@ -4,7 +4,8 @@ module ShadowMe
     # left_exposure_seconds: total exposure seconds on the left side
     # right_exposure_seconds: total exposure seconds on the right side
     # Returns a SeatRecommendation model.
-    def self.recommend(left_exposure_seconds:, right_exposure_seconds:, night_exposure_seconds: 0, front_behind_exposure_seconds: 0, is_entirely_night: false, steps: [], route_index: nil)
+    def self.recommend(left_exposure_seconds:, right_exposure_seconds:, night_exposure_seconds: 0,
+                       front_behind_exposure_seconds: 0, is_entirely_night: false, steps: [], route_index: nil)
       left_seconds = left_exposure_seconds.to_f
       right_seconds = right_exposure_seconds.to_f
       night_seconds = night_exposure_seconds.to_f
@@ -24,7 +25,7 @@ module ShadowMe
           confidence: :high,
           night_exposure_minutes: night_minutes,
           front_behind_exposure_minutes: 0,
-          message: "It is night time, enjoy your journey!",
+          message: 'It is night time, enjoy your journey!',
           steps: steps,
           route_index: route_index
         )
@@ -41,7 +42,7 @@ module ShadowMe
                    else
                      # Calculate difference percentage relative to total exposure
                      diff_pct = ((left_seconds - right_seconds).abs / total_exposure) * 100.0
-                     
+
                      # Confidence thresholds:
                      # 0-10%   => low
                      # 10-30%  => medium

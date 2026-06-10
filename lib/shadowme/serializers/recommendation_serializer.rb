@@ -13,10 +13,11 @@ module ShadowMe
         confidence: recommendation.confidence
       }
       hash[:message] = recommendation.message if recommendation.message
-      if include_steps && recommendation.steps && !recommendation.steps.empty?
-        hash[:steps] = recommendation.steps
+      hash[:steps] = recommendation.steps if include_steps && recommendation.steps && !recommendation.steps.empty?
+      if recommendation.respond_to?(:route_index) && !recommendation.route_index.nil?
+        hash[:route_index] =
+          recommendation.route_index
       end
-      hash[:route_index] = recommendation.route_index if recommendation.respond_to?(:route_index) && !recommendation.route_index.nil?
       hash
     end
 

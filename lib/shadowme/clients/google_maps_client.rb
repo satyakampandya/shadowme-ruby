@@ -5,7 +5,7 @@ module ShadowMe
   class GoogleMapsClient
     BASE_URL = 'https://maps.googleapis.com'.freeze
 
-    def initialize(api_key: ENV['GOOGLE_MAPS_API_KEY'])
+    def initialize(api_key: ENV.fetch('GOOGLE_MAPS_API_KEY', nil))
       @api_key = api_key
     end
 
@@ -17,10 +17,13 @@ module ShadowMe
     # Raises GoogleApiError or InvalidRouteError on failure.
     def directions(origin:, destination:, departure_time: nil)
       if @api_key.nil? || @api_key.empty?
-        raise GoogleApiError, "Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY environment variable."
+        raise GoogleApiError,
+              'Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY environment variable.'
       end
 
       conn = Faraday.new(url: BASE_URL) do |builder|
+        builder.options.timeout = 5       # Read timeout in seconds
+        builder.options.open_timeout = 2  # Connection timeout in seconds
         builder.request :url_encoded
         builder.adapter Faraday.default_adapter
       end
@@ -31,24 +34,27 @@ module ShadowMe
         alternatives: 'true',
         key: @api_key
       }
-      
-      if departure_time
-        params[:departure_time] = departure_time.to_i
-      end
+
+      params[:departure_time] = departure_time.to_i if departure_time
+
+      max_retries = 2
+      retries = 0
 
       begin
         response = conn.get('/maps/api/directions/json', params)
       rescue Faraday::Error => e
-        raise GoogleApiError, "Failed to connect to Google Maps API: #{e.message}"
+        raise GoogleApiError, "Failed to connect to Google Maps API: #{e.message}" unless retries < max_retries
+
+        retries += 1
+        sleep(0.1 * retries)
+        retry
       end
 
-      unless response.success?
-        raise GoogleApiError, "Google Maps API returned HTTP status #{response.status}"
-      end
+      raise GoogleApiError, "Google Maps API returned HTTP status #{response.status}" unless response.success?
 
       begin
         data = Oj.load(response.body, symbol_keys: true)
-      rescue => e
+      rescue StandardError => e
         raise GoogleApiError, "Failed to parse Google Maps API response: #{e.message}"
       end
 
@@ -58,7 +64,8 @@ module ShadowMe
       when 'ZERO_RESULTS', 'NOT_FOUND'
         raise InvalidRouteError, "No route found between '#{origin}' and '#{destination}'"
       when 'MAX_ROUTE_LENGTH_EXCEEDED'
-        raise InvalidRouteError, "The requested route between '#{origin}' and '#{destination}' is too long to be calculated."
+        raise InvalidRouteError,
+              "The requested route between '#{origin}' and '#{destination}' is too long to be calculated."
       when 'OVER_QUERY_LIMIT', 'REQUEST_DENIED', 'INVALID_REQUEST', 'UNKNOWN_ERROR'
         error_msg = data[:error_message] || "Status: #{data[:status]}"
         raise GoogleApiError, "Google Maps API error: #{error_msg}"

@@ -12,12 +12,10 @@ module ShadowMe
     end
 
     rule(:departure_time) do
-      begin
-        # Validate that departure_time is a parsable date/time
-        Time.parse(value)
-      rescue
-        key.failure('must be a valid ISO 8601 or RFC 2822 datetime format')
-      end
+      # Validate that departure_time is a parsable date/time
+      Time.parse(value)
+    rescue StandardError
+      key.failure('must be a valid ISO 8601 or RFC 2822 datetime format')
     end
   end
 end

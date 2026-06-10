@@ -18,7 +18,7 @@ module ShadowMe
           result |= (b & 0x1f) << shift
           shift += 5
         end while b >= 0x20
-        dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1))
+        dlat = ((result & 1) == 0 ? (result >> 1) : ~(result >> 1))
         lat += dlat
 
         # Decode Longitude
@@ -30,7 +30,7 @@ module ShadowMe
           result |= (b & 0x1f) << shift
           shift += 5
         end while b >= 0x20
-        dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1))
+        dlng = ((result & 1) == 0 ? (result >> 1) : ~(result >> 1))
         lng += dlng
 
         points << [lat * 1e-5, lng * 1e-5]

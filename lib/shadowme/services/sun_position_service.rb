@@ -20,11 +20,9 @@ module ShadowMe
       elevation_deg = pos[:altitude] * 180.0 / Math::PI
 
       SunPosition.new(azimuth: standard_azimuth, elevation: elevation_deg)
-    rescue => e
+    rescue StandardError => e
       raise SunCalculationError, "Failed to calculate sun position: #{e.message}"
     end
-
-    private
 
     def self.parse_time(datetime)
       case datetime
@@ -37,8 +35,9 @@ module ShadowMe
       else
         raise ArgumentError, "Unsupported datetime type: #{datetime.class}"
       end
-    rescue => e
+    rescue StandardError => e
       raise SunCalculationError, "Invalid departure_time/datetime format: #{e.message}"
     end
+    private_class_method :parse_time
   end
 end

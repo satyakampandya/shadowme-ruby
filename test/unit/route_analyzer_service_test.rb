@@ -10,7 +10,7 @@ class RouteAnalyzerServiceTest < Minitest::Test
       duration: 300, # 5 minutes
       distance: 2000
     )
-    departure_time = Time.parse("2026-06-10T08:00:00+05:30")
+    departure_time = Time.parse('2026-06-10T08:00:00+05:30')
 
     analyzed_steps = []
 
@@ -22,7 +22,8 @@ class RouteAnalyzerServiceTest < Minitest::Test
 
     StepAnalyzerService.define_singleton_method(:analyze) do |route_step:, trip_start_time:, accumulated_duration_seconds:|
       analyzed_steps << route_step
-      original_analyze(route_step: route_step, trip_start_time: trip_start_time, accumulated_duration_seconds: accumulated_duration_seconds)
+      original_analyze(route_step: route_step, trip_start_time: trip_start_time,
+                       accumulated_duration_seconds: accumulated_duration_seconds)
     end
 
     begin
@@ -50,9 +51,9 @@ class RouteAnalyzerServiceTest < Minitest::Test
       end_lat: 21.20,
       end_lng: 72.86,
       duration: 1500,
-      distance: 15000
+      distance: 15_000
     )
-    departure_time = Time.parse("2026-06-10T08:00:00+05:30")
+    departure_time = Time.parse('2026-06-10T08:00:00+05:30')
 
     analyzed_steps = []
 
@@ -63,7 +64,8 @@ class RouteAnalyzerServiceTest < Minitest::Test
 
     StepAnalyzerService.define_singleton_method(:analyze) do |route_step:, trip_start_time:, accumulated_duration_seconds:|
       analyzed_steps << route_step
-      original_analyze(route_step: route_step, trip_start_time: trip_start_time, accumulated_duration_seconds: accumulated_duration_seconds)
+      original_analyze(route_step: route_step, trip_start_time: trip_start_time,
+                       accumulated_duration_seconds: accumulated_duration_seconds)
     end
 
     begin

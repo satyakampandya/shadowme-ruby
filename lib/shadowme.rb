@@ -7,7 +7,7 @@ require 'time'
 
 # Setup Zeitwerk autoloader for the ShadowMe gem namespace
 loader = Zeitwerk::Loader.for_gem
-loader.inflector.inflect("shadowme" => "ShadowMe")
+loader.inflector.inflect('shadowme' => 'ShadowMe')
 
 # Collapse subdirectories so their contents are namespaced directly under ShadowMe
 # (e.g. ShadowMe::GoogleMapsClient instead of ShadowMe::Clients::GoogleMapsClient)
@@ -21,6 +21,14 @@ loader.collapse("#{__dir__}/shadowme/validators")
 loader.setup
 
 module ShadowMe
+  class << self
+    attr_accessor :loader
+  end
+
+  def self.eager_load!
+    loader&.eager_load
+  end
+
   # Public calculation entrypoint
   # source: "lat,lng" string
   # destination: "lat,lng" string
@@ -41,9 +49,7 @@ module ShadowMe
       include_steps: include_steps
     )
 
-    unless validation_result.success?
-      raise ValidationError.new("Validation failed", validation_result.errors.to_h)
-    end
+    raise ValidationError.new('Validation failed', validation_result.errors.to_h) unless validation_result.success?
 
     # 2. Time Parsing
     parsed_time = departure_time.is_a?(Time) ? departure_time : Time.parse(departure_time.to_s)
@@ -64,3 +70,5 @@ module ShadowMe
     RecommendationSerializer.to_hash(recommendation, include_steps: include_steps)
   end
 end
+
+ShadowMe.loader = loader

@@ -18,10 +18,10 @@ module ShadowMe
             fraction_start = i.to_f / segments_count
             fraction_end = (i + 1).to_f / segments_count
 
-            seg_start_lat = step.start_lat + (step.end_lat - step.start_lat) * fraction_start
-            seg_start_lng = step.start_lng + (step.end_lng - step.start_lng) * fraction_start
-            seg_end_lat = step.start_lat + (step.end_lat - step.start_lat) * fraction_end
-            seg_end_lng = step.start_lng + (step.end_lng - step.start_lng) * fraction_end
+            seg_start_lat = step.start_lat + ((step.end_lat - step.start_lat) * fraction_start)
+            seg_start_lng = step.start_lng + ((step.end_lng - step.start_lng) * fraction_start)
+            seg_end_lat = step.start_lat + ((step.end_lat - step.start_lat) * fraction_end)
+            seg_end_lng = step.start_lng + ((step.end_lng - step.start_lng) * fraction_end)
 
             seg_duration = step.duration / segments_count
             seg_distance = step.distance / segments_count

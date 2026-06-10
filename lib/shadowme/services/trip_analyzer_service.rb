@@ -41,9 +41,7 @@ module ShadowMe
     # Subdivides steps using encoded polylines to detect curves and merges straight segments.
     def self.extract_steps(data, route_index = 0)
       routes = data[:routes]
-      if routes.nil? || routes.empty?
-        raise InvalidRouteError, "Google Directions response did not contain any routes"
-      end
+      raise InvalidRouteError, 'Google Directions response did not contain any routes' if routes.nil? || routes.empty?
 
       steps = []
       # Analyze the requested route (fallback to index 0 if out of bounds)
@@ -80,13 +78,13 @@ module ShadowMe
 
           (points.size - 1).times do |i|
             lat1, lng1 = points[i]
-            lat2, lng2 = points[i+1]
+            lat2, lng2 = points[i + 1]
 
             d_lat = lat2 - lat1
             d_lng = lng2 - lng1
             mid_lat_rad = (lat1 + lat2) / 2.0 * Math::PI / 180.0
             dx = d_lng * Math.cos(mid_lat_rad)
-            len = Math.sqrt(d_lat*d_lat + dx*dx)
+            len = Math.sqrt((d_lat * d_lat) + (dx * dx))
 
             bearing = BearingCalculator.calculate(lat1, lng1, lat2, lng2)
 
@@ -170,22 +168,20 @@ module ShadowMe
             end
           end
 
-          if current_group
-            steps << RouteStep.new(
-              start_lat: current_group[:start_lat],
-              start_lng: current_group[:start_lng],
-              end_lat: current_group[:end_lat],
-              end_lng: current_group[:end_lng],
-              duration: current_group[:duration].round,
-              distance: current_group[:distance].round
-            )
-          end
+          next unless current_group
+
+          steps << RouteStep.new(
+            start_lat: current_group[:start_lat],
+            start_lng: current_group[:start_lng],
+            end_lat: current_group[:end_lat],
+            end_lng: current_group[:end_lng],
+            duration: current_group[:duration].round,
+            distance: current_group[:distance].round
+          )
         end
       end
 
-      if steps.empty?
-        raise InvalidRouteError, "No valid steps found in the route legs"
-      end
+      raise InvalidRouteError, 'No valid steps found in the route legs' if steps.empty?
 
       steps
     end

@@ -1,4 +1,5 @@
-require_relative '../test_helper'
+require_relative '../../../test/test_helper'
+require_relative '../app'
 require 'base64'
 
 class AdminViewTest < Minitest::Test
@@ -19,7 +20,7 @@ class AdminViewTest < Minitest::Test
     # Encode 'admin:admin123' in Base64
     credentials = Base64.strict_encode64('admin:admin123')
     header 'Authorization', "Basic #{credentials}"
-    
+
     get '/admin'
     assert_equal 200, last_response.status
     assert_includes last_response.headers['Content-Type'], 'text/html'

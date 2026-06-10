@@ -3,7 +3,7 @@ require 'erb'
 module ShadowMe
   class AdminView
     def self.render(api_key:)
-      template_path = File.expand_path('../../../app/views/admin.html.erb', __dir__)
+      template_path = File.expand_path('../views/admin.html.erb', __dir__)
       template = File.read(template_path)
       ERB.new(template).result_with_hash(api_key: api_key)
     end

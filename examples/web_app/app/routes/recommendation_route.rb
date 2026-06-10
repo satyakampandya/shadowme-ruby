@@ -12,7 +12,7 @@ class App
           validation_result = validator.call(r.params || {})
 
           unless validation_result.success?
-            raise ShadowMe::ValidationError.new("Validation failed", validation_result.errors.to_h)
+            raise ShadowMe::ValidationError.new('Validation failed', validation_result.errors.to_h)
           end
 
           # Extract validated parameters
@@ -24,8 +24,8 @@ class App
           include_steps = validation_result[:include_steps] == true
 
           # Store context for structured logging
-          @source = source
-          @destination = destination
+          r.env['shadowme.source'] = source
+          r.env['shadowme.destination'] = destination
 
           # 2. Analyze the trip route and calculate recommendation
           result_hash = ShadowMe.calculate(
