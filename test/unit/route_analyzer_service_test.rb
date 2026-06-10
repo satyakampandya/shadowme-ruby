@@ -20,7 +20,9 @@ class RouteAnalyzerServiceTest < Minitest::Test
       remove_method :analyze
     end
 
-    StepAnalyzerService.define_singleton_method(:analyze) do |route_step:, trip_start_time:, accumulated_duration_seconds:|
+    StepAnalyzerService.define_singleton_method(:analyze) do |route_step:,
+                                                              trip_start_time:,
+                                                              accumulated_duration_seconds:|
       analyzed_steps << route_step
       original_analyze(route_step: route_step, trip_start_time: trip_start_time,
                        accumulated_duration_seconds: accumulated_duration_seconds)
@@ -62,7 +64,9 @@ class RouteAnalyzerServiceTest < Minitest::Test
       remove_method :analyze
     end
 
-    StepAnalyzerService.define_singleton_method(:analyze) do |route_step:, trip_start_time:, accumulated_duration_seconds:|
+    StepAnalyzerService.define_singleton_method(:analyze) do |route_step:,
+                                                              trip_start_time:,
+                                                              accumulated_duration_seconds:|
       analyzed_steps << route_step
       original_analyze(route_step: route_step, trip_start_time: trip_start_time,
                        accumulated_duration_seconds: accumulated_duration_seconds)
