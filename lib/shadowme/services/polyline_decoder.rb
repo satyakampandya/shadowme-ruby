@@ -3,41 +3,27 @@ module ShadowMe
     # Decodes a Google encoded polyline string into an array of [lat, lng] pairs.
     def self.decode(encoded_str)
       points = []
-      index = 0
-      len = encoded_str.length
-      lat = 0
-      lng = 0
-
-      while index < len
-        # Decode Latitude
-        shift = 0
-        result = 0
-        loop do
-          b = encoded_str[index].ord - 63
-          index += 1
-          result |= (b & 0x1f) << shift
-          shift += 5
-          break unless b >= 0x20
-        end
-        dlat = (result.nobits?(1) ? (result >> 1) : ~(result >> 1))
-        lat += dlat
-
-        # Decode Longitude
-        shift = 0
-        result = 0
-        loop do
-          b = encoded_str[index].ord - 63
-          index += 1
-          result |= (b & 0x1f) << shift
-          shift += 5
-          break unless b >= 0x20
-        end
-        dlng = (result.nobits?(1) ? (result >> 1) : ~(result >> 1))
-        lng += dlng
-
-        points << [lat * 1e-5, lng * 1e-5]
+      index = lat = lng = 0
+      while index < encoded_str.length
+        dlat, index = decode_next_value(encoded_str, index)
+        dlng, index = decode_next_value(encoded_str, index)
+        points << [(lat += dlat) * 1e-5, (lng += dlng) * 1e-5]
       end
       points
     end
+
+    def self.decode_next_value(encoded_str, index)
+      shift = result = 0
+      loop do
+        b = encoded_str[index].ord - 63
+        index += 1
+        result |= (b & 0x1f) << shift
+        shift += 5
+        break unless b >= 0x20
+      end
+      [(result.nobits?(1) ? (result >> 1) : ~(result >> 1)), index]
+    end
+
+    private_class_method :decode_next_value
   end
 end

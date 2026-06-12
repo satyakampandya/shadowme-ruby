@@ -23,60 +23,49 @@ loader.setup
 module ShadowMe
   class << self
     attr_accessor :loader
-  end
 
-  def self.eager_load!
-    loader&.eager_load
-  end
+    def eager_load!
+      loader&.eager_load
+    end
 
-  # Public calculation entrypoint
-  # source: "lat,lng" string
-  # destination: "lat,lng" string
-  # departure_time: String or Time object
-  # route_index: Integer (default 0)
-  # include_steps: Boolean (default false)
-  #
-  # Returns: Hash matching the API response structure
-  # Raises: ValidationError, InvalidRouteError, GoogleApiError, SunCalculationError
-  def self.calculate(source, destination, departure_time, route_index: nil, include_steps: nil)
-    # 1. Input Validation (filter nil inputs so dry-validation rules apply correctly)
-    validation_input = {
-      source: source,
-      destination: destination,
-      departure_time: departure_time.to_s
-    }
-    validation_input[:route_index] = route_index unless route_index.nil?
-    validation_input[:include_steps] = include_steps unless include_steps.nil?
+    # Public calculation entrypoint
+    # source: "lat,lng" string
+    # destination: "lat,lng" string
+    # departure_time: String or Time object
+    # route_index: Integer (default 0)
+    # include_steps: Boolean (default false)
+    #
+    # Returns: Hash matching the API response structure
+    # Raises: ValidationError, InvalidRouteError, GoogleApiError, SunCalculationError
+    def calculate(source, destination, departure_time, route_index: nil, include_steps: nil)
+      result = validate_input(source, destination, departure_time, route_index, include_steps)
+      request = build_trip_request(result)
+      recommendation = TripAnalyzerService.new.analyze(request)
+      RecommendationSerializer.to_hash(recommendation, include_steps: result[:include_steps] == true)
+    end
 
-    validator = RecommendationValidator.new
-    validation_result = validator.call(validation_input)
+    private
 
-    raise ValidationError.new('Validation failed', validation_result.errors.to_h) unless validation_result.success?
+    def validate_input(source, destination, departure_time, route_index, include_steps)
+      input = { source: source, destination: destination, departure_time: departure_time.to_s }
+      input[:route_index] = route_index unless route_index.nil?
+      input[:include_steps] = include_steps unless include_steps.nil?
 
-    # 2. Extract validated / coerced outputs
-    coerced_source = validation_result[:source]
-    coerced_destination = validation_result[:destination]
-    coerced_departure_time_str = validation_result[:departure_time]
-    coerced_route_index = validation_result[:route_index] || 0
-    coerced_include_steps = validation_result[:include_steps] == true
+      result = RecommendationValidator.new.call(input)
+      raise ValidationError.new('Validation failed', result.errors.to_h) unless result.success?
 
-    # 3. Time Parsing
-    parsed_time = Time.parse(coerced_departure_time_str)
+      result
+    end
 
-    # 4. Build Model & Analyze
-    trip_request = TripRequest.new(
-      source: coerced_source,
-      destination: coerced_destination,
-      departure_time: parsed_time,
-      route_index: coerced_route_index,
-      include_steps: coerced_include_steps
-    )
-
-    analyzer = TripAnalyzerService.new
-    recommendation = analyzer.analyze(trip_request)
-
-    # 5. Serialize to Hash
-    RecommendationSerializer.to_hash(recommendation, include_steps: coerced_include_steps)
+    def build_trip_request(result)
+      TripRequest.new(
+        source: result[:source],
+        destination: result[:destination],
+        departure_time: Time.parse(result[:departure_time]),
+        route_index: result[:route_index] || 0,
+        include_steps: result[:include_steps] == true
+      )
+    end
   end
 end
 

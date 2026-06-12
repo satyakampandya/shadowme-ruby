@@ -62,7 +62,10 @@ module ShadowMe
       }
 
       stub_request(:get, 'https://maps.googleapis.com/maps/api/directions/json')
-        .with(query: { origin: '21.1702,72.8311', destination: '35.0,-120.0', alternatives: 'true', key: 'test-api-key' })
+        .with(query: {
+                origin: '21.1702,72.8311', destination: '35.0,-120.0',
+                alternatives: 'true', key: 'test-api-key'
+              })
         .to_return(status: 200, body: Oj.dump(mock_response,
                                               mode: :compat), headers: { 'Content-Type' => 'application/json' })
 

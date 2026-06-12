@@ -88,8 +88,9 @@ class ApiEndpointsTest < Minitest::Test
     assert_kind_of Integer, body[:right_exposure_minutes]
     assert_kind_of Integer, body[:front_behind_exposure_minutes]
     assert_includes %w[low medium high], body[:confidence]
-    assert_equal "You should sit on the #{body[:recommended_side]} side of the vehicle to minimize direct sunlight exposure.",
-                 body[:message]
+    expected_msg = "You should sit on the #{body[:recommended_side]} side of the vehicle " \
+                   'to minimize direct sunlight exposure.'
+    assert_equal expected_msg, body[:message]
 
     # Assert steps are excluded by default
     assert_nil body[:steps]

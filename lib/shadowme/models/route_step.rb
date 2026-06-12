@@ -2,6 +2,7 @@ module ShadowMe
   class RouteStep
     attr_reader :start_lat, :start_lng, :end_lat, :end_lng, :duration, :distance
 
+    # rubocop:disable Metrics/ParameterLists
     def initialize(start_lat:, start_lng:, end_lat:, end_lng:, duration:, distance:)
       @start_lat = start_lat.to_f
       @start_lng = start_lng.to_f
@@ -10,5 +11,6 @@ module ShadowMe
       @duration = duration.to_i
       @distance = distance.to_i
     end
+    # rubocop:enable Metrics/ParameterLists
   end
 end

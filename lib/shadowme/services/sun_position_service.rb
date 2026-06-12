@@ -12,7 +12,8 @@ module ShadowMe
       # altitude is the elevation angle.
       pos = SunCalc.sun_position(time, latitude.to_f, longitude.to_f)
 
-      # Convert SunCalc azimuth (radians from South to West) to standard navigation azimuth (degrees clockwise from North)
+      # Convert SunCalc azimuth (radians from South to West) to standard
+      # navigation azimuth (degrees clockwise from North)
       azimuth_deg = pos[:azimuth] * 180.0 / Math::PI
       standard_azimuth = (azimuth_deg + 180.0) % 360.0
 
@@ -26,14 +27,10 @@ module ShadowMe
 
     def self.parse_time(datetime)
       case datetime
-      when String
-        Time.parse(datetime)
-      when Time
-        datetime
-      when DateTime
-        datetime.to_time
-      else
-        raise ArgumentError, "Unsupported datetime type: #{datetime.class}"
+      when String then Time.parse(datetime)
+      when Time then datetime
+      when DateTime then datetime.to_time
+      else raise ArgumentError, "Unsupported datetime type: #{datetime.class}"
       end
     rescue StandardError => e
       raise SunCalculationError, "Invalid departure_time/datetime format: #{e.message}"
