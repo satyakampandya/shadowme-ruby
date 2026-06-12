@@ -12,25 +12,27 @@ module ShadowMe
         # Decode Latitude
         shift = 0
         result = 0
-        begin
+        loop do
           b = encoded_str[index].ord - 63
           index += 1
           result |= (b & 0x1f) << shift
           shift += 5
-        end while b >= 0x20
-        dlat = ((result & 1) == 0 ? (result >> 1) : ~(result >> 1))
+          break unless b >= 0x20
+        end
+        dlat = (result.nobits?(1) ? (result >> 1) : ~(result >> 1))
         lat += dlat
 
         # Decode Longitude
         shift = 0
         result = 0
-        begin
+        loop do
           b = encoded_str[index].ord - 63
           index += 1
           result |= (b & 0x1f) << shift
           shift += 5
-        end while b >= 0x20
-        dlng = ((result & 1) == 0 ? (result >> 1) : ~(result >> 1))
+          break unless b >= 0x20
+        end
+        dlng = (result.nobits?(1) ? (result >> 1) : ~(result >> 1))
         lng += dlng
 
         points << [lat * 1e-5, lng * 1e-5]

@@ -11,7 +11,7 @@ module ShadowMe
       @night_exposure_minutes = night_exposure_minutes.to_i
       @front_behind_exposure_minutes = front_behind_exposure_minutes.to_i
       @confidence = confidence.to_s
-      @message = message ? message.to_s : nil
+      @message = message&.to_s
       @steps = steps
       @route_index = route_index
     end

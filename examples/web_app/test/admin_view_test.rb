@@ -9,18 +9,7 @@ class AdminViewTest < Minitest::Test
     App
   end
 
-  def test_admin_endpoint_unauthorized
-    get '/admin'
-    assert_equal 401, last_response.status
-    assert_equal 'Basic realm="ShadowMe Admin UI"', last_response.headers['WWW-Authenticate']
-    assert_equal 'Unauthorized', last_response.body
-  end
-
-  def test_admin_endpoint_authorized
-    # Encode 'admin:admin123' in Base64
-    credentials = Base64.strict_encode64('admin:admin123')
-    header 'Authorization', "Basic #{credentials}"
-
+  def test_admin_endpoint
     get '/admin'
     assert_equal 200, last_response.status
     assert_includes last_response.headers['Content-Type'], 'text/html'

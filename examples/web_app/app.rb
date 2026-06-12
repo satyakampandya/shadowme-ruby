@@ -3,7 +3,6 @@ Bundler.require(:default, ENV['RACK_ENV'] || :development)
 
 require 'securerandom'
 require 'oj'
-require 'rack/auth/basic'
 
 # Load the local gem code
 $LOAD_PATH.unshift(File.expand_path('../../lib', __dir__))
@@ -119,16 +118,9 @@ class App < Roda
 
     # 3. Admin UI (GET /admin)
     r.get 'admin' do
-      auth = Rack::Auth::Basic::Request.new(r.env)
-      if auth.provided? && auth.basic? && auth.credentials == ['admin', ENV['ADMIN_PASSWORD'] || 'admin123']
-        response.status = 200
-        response['Content-Type'] = 'text/html; charset=utf-8'
-        ShadowMe::AdminView.render(api_key: ENV['GOOGLE_MAPS_API_KEY'] || 'test-api-key')
-      else
-        response.status = 401
-        response['WWW-Authenticate'] = 'Basic realm="ShadowMe Admin UI"'
-        r.halt(401, 'Unauthorized')
-      end
+      response.status = 200
+      response['Content-Type'] = 'text/html; charset=utf-8'
+      ShadowMe::AdminView.render(api_key: ENV['GOOGLE_MAPS_API_KEY'] || 'test-api-key')
     end
 
     # 4. Recommendation API Route
@@ -136,31 +128,23 @@ class App < Roda
       r.on 'v1' do
         r.on 'recommendation' do
           r.post do
-            # Validate parameters
-            validator = ShadowMe::RecommendationValidator.new
-            validation_result = validator.call(r.params || {})
-
-            unless validation_result.success?
-              raise ShadowMe::ValidationError.new('Validation failed', validation_result.errors.to_h)
-            end
-
-            # Extract validated parameters
-            source = validation_result[:source]
-            destination = validation_result[:destination]
-            departure_time_str = validation_result[:departure_time]
-            departure_time = Time.parse(departure_time_str)
-            route_index = validation_result[:route_index] || 0
-            include_steps = validation_result[:include_steps] == true
+            # Extract parameters directly from request (validation will occur inside the gem)
+            params = r.params || {}
+            source = params['source']
+            destination = params['destination']
+            departure_time_str = params['departure_time']
+            route_index = params['route_index']
+            include_steps = params['include_steps']
 
             # Store logging context in env
             r.env['shadowme.source'] = source
             r.env['shadowme.destination'] = destination
 
-            # Run engine calculations
+            # Run engine calculations (which validates inputs and coerces types)
             result_hash = ShadowMe.calculate(
               source,
               destination,
-              departure_time,
+              departure_time_str,
               route_index: route_index,
               include_steps: include_steps
             )

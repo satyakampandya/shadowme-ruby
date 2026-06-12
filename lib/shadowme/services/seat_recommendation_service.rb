@@ -32,31 +32,32 @@ module ShadowMe
       end
 
       # "The recommended side is the side receiving less sunlight."
-      # If they are equal, it defaults to :right as per the `<` comparison.
-      recommended_side = left_seconds < right_seconds ? :left : :right
+      # If there is no side exposure at all, recommend :either with high confidence.
+      if left_seconds.zero? && right_seconds.zero?
+        recommended_side = :either
+        confidence = :high
+        message = 'Either side is fine, there is no direct side sunlight exposure.'
+      else
+        recommended_side = left_seconds < right_seconds ? :left : :right
+        total_exposure = left_seconds + right_seconds
 
-      total_exposure = left_seconds + right_seconds
+        # Calculate difference percentage relative to total exposure
+        diff_pct = ((left_seconds - right_seconds).abs / total_exposure) * 100.0
 
-      confidence = if total_exposure <= 0
-                     :low
-                   else
-                     # Calculate difference percentage relative to total exposure
-                     diff_pct = ((left_seconds - right_seconds).abs / total_exposure) * 100.0
-
-                     # Confidence thresholds:
-                     # 0-10%   => low
-                     # 10-30%  => medium
-                     # 30%+    => high
-                     if diff_pct <= 10.0
+        # Confidence thresholds:
+        # 0-10%   => low
+        # 10-30%  => medium
+        # 30%+    => high
+        confidence = if diff_pct <= 10.0
                        :low
                      elsif diff_pct <= 30.0
                        :medium
                      else
                        :high
                      end
-                   end
 
-      message = "You should sit on the #{recommended_side} side of the vehicle to minimize direct sunlight exposure."
+        message = "You should sit on the #{recommended_side} side of the vehicle to minimize direct sunlight exposure."
+      end
 
       SeatRecommendation.new(
         recommended_side: recommended_side,

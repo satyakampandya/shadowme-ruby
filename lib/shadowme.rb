@@ -38,36 +38,45 @@ module ShadowMe
   #
   # Returns: Hash matching the API response structure
   # Raises: ValidationError, InvalidRouteError, GoogleApiError, SunCalculationError
-  def self.calculate(source, destination, departure_time, route_index: 0, include_steps: false)
-    # 1. Input Validation
-    validator = RecommendationValidator.new
-    validation_result = validator.call(
+  def self.calculate(source, destination, departure_time, route_index: nil, include_steps: nil)
+    # 1. Input Validation (filter nil inputs so dry-validation rules apply correctly)
+    validation_input = {
       source: source,
       destination: destination,
-      departure_time: departure_time.to_s,
-      route_index: route_index,
-      include_steps: include_steps
-    )
+      departure_time: departure_time.to_s
+    }
+    validation_input[:route_index] = route_index unless route_index.nil?
+    validation_input[:include_steps] = include_steps unless include_steps.nil?
+
+    validator = RecommendationValidator.new
+    validation_result = validator.call(validation_input)
 
     raise ValidationError.new('Validation failed', validation_result.errors.to_h) unless validation_result.success?
 
-    # 2. Time Parsing
-    parsed_time = departure_time.is_a?(Time) ? departure_time : Time.parse(departure_time.to_s)
+    # 2. Extract validated / coerced outputs
+    coerced_source = validation_result[:source]
+    coerced_destination = validation_result[:destination]
+    coerced_departure_time_str = validation_result[:departure_time]
+    coerced_route_index = validation_result[:route_index] || 0
+    coerced_include_steps = validation_result[:include_steps] == true
 
-    # 3. Build Model & Analyze
+    # 3. Time Parsing
+    parsed_time = Time.parse(coerced_departure_time_str)
+
+    # 4. Build Model & Analyze
     trip_request = TripRequest.new(
-      source: source,
-      destination: destination,
+      source: coerced_source,
+      destination: coerced_destination,
       departure_time: parsed_time,
-      route_index: route_index,
-      include_steps: include_steps
+      route_index: coerced_route_index,
+      include_steps: coerced_include_steps
     )
 
     analyzer = TripAnalyzerService.new
     recommendation = analyzer.analyze(trip_request)
 
-    # 4. Serialize to Hash
-    RecommendationSerializer.to_hash(recommendation, include_steps: include_steps)
+    # 5. Serialize to Hash
+    RecommendationSerializer.to_hash(recommendation, include_steps: coerced_include_steps)
   end
 end
 

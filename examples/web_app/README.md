@@ -22,7 +22,7 @@ bundle exec rackup examples/web_app/config.ru -p 9292
 
 ### 1. Interactive Admin UI Dashboard
 * **URL**: `GET http://localhost:9292/admin`
-* **Credentials**: Username: `admin` | Password: `admin123` (or configured via `ADMIN_PASSWORD` env var).
+* **Access**: No authentication is required for local testing.
 * **Features**: Includes location autocomplete, route comparisons, and a playable route-bearing simulation.
 
 ### 2. Recommendation API

@@ -1,6 +1,6 @@
 ENV['RACK_ENV'] = 'test'
 
-# Ensure we use test API keys
+# Ensure we use test API keys in tests
 ENV['GOOGLE_MAPS_API_KEY'] = 'test-api-key'
 
 require 'minitest/autorun'
@@ -19,23 +19,3 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 
 # Require main application (loads the shadowme gem code)
 require 'shadowme'
-
-# Alias namespaced constants to global namespace for test suite compatibility
-ValidationError = ShadowMe::ValidationError
-InvalidRouteError = ShadowMe::InvalidRouteError
-GoogleApiError = ShadowMe::GoogleApiError
-SunCalculationError = ShadowMe::SunCalculationError
-RouteStep = ShadowMe::RouteStep
-SeatRecommendation = ShadowMe::SeatRecommendation
-SunPosition = ShadowMe::SunPosition
-TripRequest = ShadowMe::TripRequest
-BearingCalculator = ShadowMe::BearingCalculator
-MidpointCalculator = ShadowMe::MidpointCalculator
-PolylineDecoder = ShadowMe::PolylineDecoder
-RelativeSunPositionService = ShadowMe::RelativeSunPositionService
-RouteAnalyzerService = ShadowMe::RouteAnalyzerService
-SeatRecommendationService = ShadowMe::SeatRecommendationService
-StepAnalyzerService = ShadowMe::StepAnalyzerService
-SunPositionService = ShadowMe::SunPositionService
-TripAnalyzerService = ShadowMe::TripAnalyzerService
-GoogleMapsClient = ShadowMe::GoogleMapsClient
