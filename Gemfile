@@ -2,21 +2,19 @@ source 'https://rubygems.org'
 
 ruby '>= 3.4.0'
 
-gem 'roda'
-gem 'puma'
-gem 'faraday'
-gem 'zeitwerk'
-gem 'dry-validation'
-gem 'oj'
-gem 'redis'
-gem 'sun_calc'
+# Loads runtime dependencies defined in shadowme-ruby.gemspec
+gemspec
 
+# Development & Testing dependencies
 group :development, :test do
-  gem 'rake'
-  gem 'minitest'
-  gem 'minitest-reporters'
-  gem 'rack-test'
-  gem 'webmock'
-  gem 'rackup'
-  gem 'base64'
+  gem 'base64', '~> 0.2'
+  gem 'minitest', '~> 6.0'
+  gem 'minitest-reporters', '~> 1.6'
+  gem 'puma', '~> 6.0'
+  gem 'rack-test', '~> 2.0'
+  gem 'rackup', '~> 2.0'
+  gem 'rake', '~> 13.0'
+  gem 'roda', '~> 3.80'
+  gem 'rubocop', '~> 1.60'
+  gem 'webmock', '~> 3.18'
 end

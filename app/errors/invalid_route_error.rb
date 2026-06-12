@@ -1,1 +1,0 @@
-class InvalidRouteError < StandardError; end

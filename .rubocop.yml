@@ -1,0 +1,26 @@
+AllCops:
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'db/**/*'
+    - 'bin/**/*'
+    - 'node_modules/**/*'
+    - 'examples/web_app/public/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Metrics:
+  Exclude:
+    - 'test/**/*'
+    - 'examples/web_app/test/**/*'
+    - 'examples/web_app/app.rb'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'test/**/*'
+    - 'examples/web_app/test/**/*'
+    - 'examples/web_app/app.rb'

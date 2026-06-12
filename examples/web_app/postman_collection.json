@@ -1,0 +1,168 @@
+{
+	"info": {
+		"_postman_id": "e6a21350-f8bb-4b68-9d41-cc2df25b292e",
+		"name": "ShadowMe API",
+		"description": "Collection of API requests to interact with the ShadowMe seat side recommendation API.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "System Info",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Verifies that the Roda application is running and responsive."
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ready",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ready"
+							]
+						},
+						"description": "Verifies the status of underlying components: Google Maps API key configuration."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Recommendations",
+			"item": [
+				{
+					"name": "Get Recommendation (Daytime Trip)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"source\": \"21.1702,72.8311\",\n  \"destination\": \"23.0225,72.5714\",\n  \"departure_time\": \"2026-06-10T08:00:00+05:30\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/recommendation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"recommendation"
+							]
+						},
+						"description": "Computes seat side recommendation based on solar positioning and route direction. Example represents a morning trip from Surat to Ahmedabad using coordinates."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recommendation (With Route Steps)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"source\": \"21.1702,72.8311\",\n  \"destination\": \"23.0225,72.5714\",\n  \"departure_time\": \"2026-06-10T08:00:00+05:30\",\n  \"include_steps\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/recommendation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"recommendation"
+							]
+						},
+						"description": "Computes seat side recommendation with detailed steps data included in the response."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recommendation (Night-time Trip)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"source\": \"21.1702,72.8311\",\n  \"destination\": \"23.0225,72.5714\",\n  \"departure_time\": \"2026-06-10T23:00:00+05:30\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/recommendation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"recommendation"
+							]
+						},
+						"description": "Computes seat side recommendation for a trip occurring entirely at night. Returns optimal recommended_side 'either' and a custom travel message."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:9292",
+			"type": "string"
+		}
+	]
+}

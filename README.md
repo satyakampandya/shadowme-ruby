@@ -1,241 +1,77 @@
-# ShadowMe API
+# ShadowMe Ruby Gem
 
-ShadowMe is a lightweight, stateless Ruby microservice that recommends whether a passenger should sit on the **left side** or **right side** of a vehicle during a journey to minimize direct sunlight exposure.
+`shadowme-ruby` is a stateless mathematical calculation engine packaged as a Ruby Gem. It calculates sunlight exposure on a passenger vehicle during a journey to recommend whether a passenger should sit on the **left side** or **right side** to minimize direct sunlight exposure.
 
-By analyzing Google Directions API route steps, the system calculates the vehicle's bearing and the sun's relative position (azimuth and elevation) throughout the trip to determine the side receiving the least solar radiation.
-
----
-
-## Technical Stack
-- **Runtime**: Ruby 3.4+
-- **Routing**: Roda
-- **App Server**: Puma
-- **HTTP Client**: Faraday
-- **Autoloading**: Zeitwerk
-- **Validation**: Dry-Validation
-- **JSON Engine**: Oj
-- **Cache Store**: Redis
-- **Testing**: Minitest, WebMock, Rack-Test
-- **Containerization**: Docker & Docker Compose
+The engine parses route geometries from the Google Directions API, calculates vehicle bearings, and computes the sun's relative position (azimuth and elevation) throughout the trip to determine the side receiving the least solar radiation.
 
 ---
 
-## Project Structure
-```text
-shadowme-ruby/
-├── app.rb                   # App entrypoint (autoloading, logging, error handler)
-├── config.ru                # Rackup configuration
-├── Rakefile                 # Rake tasks (testing)
-├── Dockerfile               # Production Docker container definition
-├── docker-compose.yml       # Multi-container local orchestration
-├── config/
-│   └── puma.rb              # Puma server configuration
-├── app/
-│   ├── clients/             # External client integrations (Google Maps)
-│   ├── errors/              # Custom exceptions
-│   ├── models/              # Pure Ruby data models
-│   ├── routes/              # Routing branches (Roda hash branches)
-│   ├── serializers/         # JSON serializing logic (Oj)
-│   ├── services/            # Core business logic, calculators, and caching
-│   └── validators/          # Input schema contracts (Dry-Validation)
-└── test/
-    ├── test_helper.rb       # Test configuration and stubs
-    ├── unit/                # Service/Calculator tests
-    └── integration/         # API Endpoint and client tests
+## 🏗️ Project Architecture
+
+* **`lib/`**: Contains the standalone library code. It has zero dependencies on web servers (Roda/Puma) or databases, making it extremely lightweight and secure for production load in other apps (e.g. Rails API gateway).
+* **`examples/web_app/`**: A development-only sandbox containing the Roda API wrapper and the interactive Admin UI dashboard. This is completely excluded from the packaged gem build.
+
+---
+
+## ⚙️ Installation
+
+To use this gem in your Rails or other Ruby projects, add it to your `Gemfile` pointing to the local directory (or git repository):
+
+```ruby
+gem 'shadowme-ruby', path: 'path/to/shadowme-ruby'
 ```
 
----
-
-## Getting Started
-
-### Prerequisites
-- **Ruby**: version `3.4.0` or higher
-- **Bundler**: installed (`gem install bundler`)
-- **Redis**: installed and running locally (optional, but recommended for caching)
-- **Google Maps API Key**: Directions API enabled
-
-### Local Installation
-1. Clone the repository and navigate to the directory:
-   ```bash
-   cd shadowme-ruby
-   ```
-
-2. Install the gems:
-   ```bash
-   bundle install
-   ```
-
-3. Set up environment variables. Create a `.env` file or export them directly in your shell:
-   ```bash
-   export GOOGLE_MAPS_API_KEY="your-google-maps-api-key-here"
-   export REDIS_URL="redis://127.0.0.1:6379/0" # Optional
-   ```
-
-### Running Locally
-To launch the server locally on the default port `9292` using Puma:
+And run:
 ```bash
-bundle exec puma config.ru
+bundle install
 ```
-The server will now be accessible at `http://localhost:9292`.
 
 ---
 
-## API Endpoints
+## 🚀 Usage
 
-### 1. Health Check
-Checks if the web server is responsive.
-- **URL**: `/health`
-- **Method**: `GET`
-- **Response**:
-  ```json
-  {
-    "status": "ok"
-  }
-  ```
+Exposes a clean, public class method entrypoint:
 
-### 2. Readiness Check
-Checks system dependencies (Redis connectivity and Google API environment variables).
-- **URL**: `/ready`
-- **Method**: `GET`
-- **Response (Success - 200 OK)**:
-  ```json
-  {
-    "status": "ready",
-    "checks": {
-      "redis": "ok",
-      "google_api": "configured"
-    }
-  }
-  ```
-- **Response (Failure - 503 Service Unavailable)**:
-  ```json
-  {
-    "status": "not_ready",
-    "checks": {
-      "redis": "failed",
-      "google_api": "missing"
-    }
-  }
-  ```
+```ruby
+require 'shadowme'
 
-### 3. Get Seat Recommendation
-Calculates the optimal side to sit on. By default, internal debug steps and route geometries are omitted from the response to optimize payload size and cache memory. To request detailed route step coordinates, bearings, and sun positions, set `"include_steps": true`.
+result = ShadowMe.calculate(
+  "21.1702,72.8311",                # source coordinates
+  "23.0225,72.5714",                # destination coordinates
+  "2026-06-10T08:00:00+05:30",      # departure time (String or Time)
+  route_index: 0,                   # optional route index (default: 0)
+  include_steps: true               # optional steps breakdown (default: false)
+)
+```
 
-- **URL**: `/api/v1/recommendation`
-- **Method**: `POST`
-- **Headers**: `Content-Type: application/json`
-- **Payload**:
-  ```json
-  {
-    "source": "21.1702,72.8311",
-    "destination": "23.0225,72.5714",
-    "departure_time": "2026-06-10T08:00:00+05:30",
-    "include_steps": false,
-    "route_index": 0
-  }
-  ```
-- **Response (200 OK - Default/Simple Response)**:
-  ```json
-  {
-    "recommended_side": "left",
-    "left_exposure_minutes": 15,
-    "right_exposure_minutes": 72,
-    "night_exposure_minutes": 0,
-    "front_behind_exposure_minutes": 0,
-    "confidence": "high",
-    "message": "You should sit on the left side of the vehicle to minimize direct sunlight exposure."
-  }
-  ```
-
-- **Response (200 OK - With Detailed Steps `include_steps: true`)**:
-  ```json
-  {
-    "recommended_side": "left",
-    "left_exposure_minutes": 15,
-    "right_exposure_minutes": 72,
-    "night_exposure_minutes": 0,
-    "front_behind_exposure_minutes": 0,
-    "confidence": "high",
-    "message": "You should sit on the left side of the vehicle to minimize direct sunlight exposure.",
-    "steps": [
-      {
-        "start_lat": 21.1702,
-        "start_lng": 72.8311,
-        "end_lat": 21.2015,
-        "end_lng": 72.8532,
-        "duration": 600,
-        "distance": 5000,
-        "midpoint_lat": 21.18585,
-        "midpoint_lng": 72.84215,
-        "midpoint_time": "2026-06-10T08:05:00+05:30",
-        "bearing": 30.5,
-        "sun_azimuth": 110.5,
-        "sun_elevation": 42.3,
-        "sun_side": "right"
-      }
-    ],
-    "route_index": 0
-  }
-  ```
-
-- **Response (200 OK - Night-time Trip)**:
-  ```json
-  {
-    "recommended_side": "either",
-    "left_exposure_minutes": 0,
-    "right_exposure_minutes": 0,
-    "night_exposure_minutes": 180,
-    "front_behind_exposure_minutes": 0,
-    "confidence": "high",
-    "message": "It is night time, enjoy your journey!"
-  }
-  ```
+### Response Hash Format (Simple)
+```ruby
+{
+  recommended_side: "left",
+  left_exposure_minutes: 15,
+  right_exposure_minutes: 72,
+  night_exposure_minutes: 0,
+  front_behind_exposure_minutes: 0,
+  confidence: "high",
+  message: "You should sit on the left side of the vehicle to minimize direct sunlight exposure."
+}
+```
 
 ---
 
-## Running Tests
-Minitest handles the testing. Upstream Google Directions API calls are completely mocked using WebMock, and Redis is stubbed by default in tests to enable offline testing.
+## 🧪 Running Library Tests
 
-To run the entire test suite:
+Minitest handles the testing of all calculator and client logic. Upstream Google Directions API calls are completely mocked using WebMock to enable offline testing.
+
+To run the entire unit test suite:
 ```bash
-bundle exec rake test
-```
-Alternatively, you can run all tests using the Ruby interpreter directly:
-```bash
-bundle exec ruby -e "Dir['test/**/*_test.rb'].each { |f| require File.expand_path(f) }"
+bundle exec rake
 ```
 
 ---
 
-## Running with Docker
+## 🛠️ Local Interactive Sandbox (Web UI & API)
 
-### Using Docker Compose (Recommended)
-Docker Compose will launch both the web application (port `9292`) and a local Redis instance:
+We provide a web-based sandbox dashboard under `examples/web_app` to test the calculations visually on a map.
 
-1. Launch services:
-   ```bash
-   GOOGLE_MAPS_API_KEY="your_api_key" docker-compose up --build
-   ```
-
-2. Stop services:
-   ```bash
-   docker-compose down
-   ```
-
-### Using Docker Directly
-1. Build the Docker image:
-   ```bash
-   docker build -t shadowme-api .
-   ```
-
-2. Run the container:
-   ```bash
-   docker run -p 9292:9292 -e GOOGLE_MAPS_API_KEY="your_api_key" shadowme-api
-   ```
-
----
-
-## Deployment & Production Configurations
-- **App Freezing**: When running in production (`RACK_ENV=production`), Roda routes are frozen for optimal performance.
-- **Thread Concurrency**: Puma can be scaled concurrently by setting `MAX_THREADS` and `WEB_CONCURRENCY` environment variables.
-- **API Cache**: Caching defaults to a **24-hour TTL**. Ensure your production deployment sets `REDIS_URL` to point to a persistent/elastic Redis store.
+For instructions on configuring and running the web sandbox locally, refer to the [Web Sandbox README](file:///Users/satyakampandya/workspace/shadowme-ruby/examples/web_app/README.md).

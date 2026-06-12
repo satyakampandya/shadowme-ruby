@@ -6,34 +6,34 @@
 
 ## Objective
 
-Build a lightweight Ruby API service that recommends whether a passenger should sit on the **left side** or **right side** of a vehicle to minimize direct sunlight exposure during a journey.
+Build a lightweight Ruby library (gem) and a local development sandbox service that recommends whether a passenger should sit on the **left side** or **right side** of a vehicle to minimize direct sunlight exposure during a journey.
 
-The system should analyze the route returned by Google Directions API, calculate the sun's position throughout the journey, and determine which side receives less sunlight.
+The system analyzes the route returned by Google Directions API, calculates the sun's position throughout the journey, and determines which side receives less sunlight.
 
 ---
 
 # Tech Stack
 
-```text
-Ruby 3.4+
-Roda
-Puma
-Faraday
-Zeitwerk
-Dry-Validation
-Oj
-Redis (optional, recommended)
-Docker
-Minitest
-```
+### Standalone Ruby Gem (`lib/`)
+* Ruby 3.4+
+* Faraday (with configured connection/read timeouts)
+* Zeitwerk (namespace autoloading & class collapse configuration)
+* Dry-Validation (input schema validation)
+* Oj (fast JSON processing)
+* Minitest (unit testing)
 
-No database is required for V1.
+*Note: No database or caching dependencies are included in the production gem package to ensure a completely stateless calculation engine.*
 
-The application should remain completely stateless.
+### Local Development Sandbox (`examples/web_app/`)
+* Roda (routing tree web framework)
+* Puma (rack web server)
+* Rackup
+* HTML, CSS, JavaScript (Admin UI dashboard)
+* Rack::Test (integration testing)
 
 ---
 
-# API Design
+# API Design (Sandbox Web App)
 
 ## Endpoint
 
@@ -116,26 +116,16 @@ POST /api/v1/recommendation
 # Architecture
 
 ```text
-Client
-  │
-  ▼
-Roda API
-  │
-  ▼
-Request Validator
-  │
-  ▼
-TripAnalyzerService
-  │
-  ├── GoogleMapsClient
-  │
-  ├── RouteAnalyzerService
-  │
-  ├── SunPositionService
-  │
-  ├── RelativeSunPositionService
-  │
-  └── SeatRecommendationService
+Web Sandbox (examples/web_app/)             Standalone Gem (lib/shadowme/)
+┌──────────────────────────────┐            ┌────────────────────────────────┐
+│ Roda API & Admin UI Dashboard│            │ ShadowMe.calculate             │
+│                              │            │                                │
+│ - app.rb (Roda application)  │            │ - TripAnalyzerService          │
+│ - AdminView (HTML Renderer)  │ ─────────> │ - RouteAnalyzerService         │
+│ - RecommendationValidator    │            │ - StepAnalyzerService          │
+│                              │            │ - Bearing/Midpoint Calculators │
+│ - Public Static Assets       │            │ - SunPositionService           │
+└──────────────────────────────┘            └────────────────────────────────┘
 ```
 
 ---
@@ -145,57 +135,68 @@ TripAnalyzerService
 ```text
 shadowme-ruby/
 
-├── app.rb
-├── config.ru
+├── lib/
+│   ├── shadowme.rb
+│   └── shadowme/
+│       ├── clients/
+│       │   └── google_maps_client.rb
+│       ├── errors/
+│       │   ├── google_api_error.rb
+│       │   ├── invalid_route_error.rb
+│       │   ├── sun_calculation_error.rb
+│       │   └── validation_error.rb
+│       ├── models/
+│       │   ├── route_step.rb
+│       │   ├── seat_recommendation.rb
+│       │   ├── sun_position.rb
+│       │   └── trip_request.rb
+│       ├── serializers/
+│       │   └── recommendation_serializer.rb
+│       ├── services/
+│       │   ├── bearing_calculator.rb
+│       │   ├── google_directions_route_mapper.rb
+│       │   ├── midpoint_calculator.rb
+│       │   ├── polyline_decoder.rb
+│       │   ├── relative_sun_position_service.rb
+│       │   ├── route_analyzer_service.rb
+│       │   ├── route_step_segmenter.rb
+│       │   ├── seat_recommendation_service.rb
+│       │   ├── step_analyzer_service.rb
+│       │   ├── sun_position_service.rb
+│       │   └── trip_analyzer_service.rb
+│       └── validators/
+│           └── recommendation_validator.rb
+│
+├── examples/
+│   └── web_app/
+│       ├── app.rb
+│       ├── config.ru
+│       ├── README.md
+│       ├── config/
+│       │   └── puma.rb
+│       ├── app/
+│       │   └── views/
+│       │       ├── admin.html.erb
+│       │       └── admin_view.rb
+│       ├── public/
+│       │   ├── css/
+│       │   └── js/
+│       └── test/
+│           ├── admin_view_test.rb
+│           └── api_endpoints_test.rb
+│
+├── test/
+│   ├── test_helper.rb
+│   └── unit/
+│       ├── bearing_calculator_test.rb
+│       ├── google_maps_client_test.rb
+│       └── ...
+│
 ├── Gemfile
 ├── Gemfile.lock
 ├── Rakefile
-├── Dockerfile
-├── docker-compose.yml
-
-├── app/
-│   ├── routes/
-│   │   └── recommendation_route.rb
-│   │
-│   ├── clients/
-│   │   └── google_maps_client.rb
-│   │
-│   ├── services/
-│   │   ├── trip_analyzer_service.rb
-│   │   ├── route_analyzer_service.rb
-│   │   ├── step_analyzer_service.rb
-│   │   ├── bearing_calculator.rb
-│   │   ├── midpoint_calculator.rb
-│   │   ├── sun_position_service.rb
-│   │   ├── relative_sun_position_service.rb
-│   │   ├── seat_recommendation_service.rb
-│   │   └── trip_cache.rb
-│   │
-│   ├── validators/
-│   │   └── recommendation_validator.rb
-│   │
-│   ├── serializers/
-│   │   └── recommendation_serializer.rb
-│   │
-│   ├── models/
-│   │   ├── trip_request.rb
-│   │   ├── route_step.rb
-│   │   ├── sun_position.rb
-│   │   └── seat_recommendation.rb
-│   │
-│   └── errors/
-│       ├── google_api_error.rb
-│       ├── invalid_route_error.rb
-│       ├── sun_calculation_error.rb
-│       └── validation_error.rb
-│
-├── config/
-│   └── puma.rb
-│
-└── test/
-    ├── test_helper.rb
-    ├── unit/
-    └── integration/
+├── shadowme-ruby.gemspec
+└── AGENTS.md
 ```
 
 ---
@@ -313,7 +314,7 @@ Output:
 }
 ```
 
-The implementation should calculate this locally using astronomy formulas or a Ruby library.
+The implementation calculates this locally using astronomy formulas (via the `sun_calc` gem).
 
 Do not use external sun-position APIs.
 
@@ -417,66 +418,38 @@ Response:
 
 # Google Maps Integration
 
-Create a dedicated client.
+Create a dedicated client under the `ShadowMe` namespace.
 
 ```ruby
-class GoogleMapsClient
-  def directions(...)
+module ShadowMe
+  class GoogleMapsClient
+    def directions(...)
+    end
   end
 end
 ```
 
-Only this class should communicate with Google APIs.
+Only this class should communicate with Google APIs. It enforces connection (2s) and read (5s) timeouts on its Faraday connection.
 
 No other service should know Google-specific details.
 
 ---
 
-# Caching
+# Caching (Removed)
 
-Use Redis.
-
-Cache key inputs:
-
-```text
-source
-destination
-departure_time
-route_index
-include_steps
-```
-
-Example:
-
-```ruby
-Digest::SHA256.hexdigest(raw_string)
-```
-
-TTL:
-
-```text
-6 hours
-```
-
-or
-
-```text
-24 hours
-```
-
-depending on traffic sensitivity.
+V1 does not perform caching. The application remains completely stateless.
 
 ---
 
 # Error Handling
 
-Create custom exceptions.
+All custom exceptions are namespaced under the `ShadowMe` module.
 
 ```ruby
-GoogleApiError
-InvalidRouteError
-SunCalculationError
-ValidationError
+ShadowMe::GoogleApiError
+ShadowMe::InvalidRouteError
+ShadowMe::SunCalculationError
+ShadowMe::ValidationError
 ```
 
 API responses should never expose stack traces.
@@ -493,7 +466,7 @@ Example:
 
 # Logging
 
-Use structured JSON logs.
+Use structured JSON logs on stdout (handled at the Rack level inside `App.call`).
 
 Example:
 
@@ -522,72 +495,43 @@ Response:
 }
 ```
 
-Optional readiness endpoint:
+Ready check endpoint:
 
 ```http
 GET /ready
 ```
 
 Checks:
-
-```text
-* Redis connectivity
-* Google API configuration
-```
+* Google API configuration key presence
 
 ---
 
 # Testing Strategy
 
-### Unit Tests
+### Unit Tests (`test/unit/`)
+Test calculation services, calculators, and clients independently:
+* `BearingCalculator`
+* `GoogleDirectionsRouteMapper`
+* `GoogleMapsClient` (with mocked API calls using WebMock)
+* `MidpointCalculator`
+* `RelativeSunPositionService`
+* `RouteStepSegmenter`
+* `SeatRecommendationService`
+* `SunPositionService`
 
-Test independently:
-
-```text
-BearingCalculator
-MidpointCalculator
-SunPositionService
-RelativeSunPositionService
-SeatRecommendationService
-```
-
-### Integration Tests
-
-Test:
-
-```text
-GoogleMapsClient
-API Endpoints
-TripAnalyzerService
-```
-
-Google API calls should be mocked during tests.
-
----
-
-# Future Enhancements (Not V1)
-
-* Polyline-based route analysis instead of step-based analysis
-* Traffic-aware calculations
-* Route alternatives comparison
-* User accounts
-* API keys and billing
-* PostgreSQL analytics storage
-* Historical recommendation tracking
-* Multi-stop journeys
-* Weather/cloud cover integration
+### Integration Tests (`examples/web_app/test/`)
+Test Rack integration endpoints and the Admin view HTML rendering:
+* `ApiEndpointsTest`
+* `AdminViewTest`
 
 ---
 
 # Core Principle
 
-The service should remain a **stateless computation engine**:
+The service remains a **stateless computation engine** wrapped in a standalone gem:
 
 ```text
-Input:
-Source
-Destination
-Departure Time
+Input: Source, Destination, Departure Time
 
 ↓
 
@@ -595,7 +539,7 @@ Google Directions Route
 
 ↓
 
-Analyze Every Step
+Analyze Every Step (Midpoints & Bearing)
 
 ↓
 
@@ -610,4 +554,4 @@ Measure Left/Right Exposure
 Return Seat Recommendation
 ```
 
-Avoid Rails, avoid a database, and keep all business logic isolated into small, testable service objects. This keeps the codebase lightweight, fast, inexpensive to operate, and easy to maintain.
+Keep the library decoupled from web UI/dashboard components, and keep business logic isolated in testable service objects.
