@@ -152,16 +152,20 @@ shadowme-ruby/
 │       │   └── trip_request.rb
 │       ├── serializers/
 │       │   └── recommendation_serializer.rb
-│       └── services/
-│           ├── bearing_calculator.rb
-│           ├── midpoint_calculator.rb
-│           ├── polyline_decoder.rb
-│           ├── relative_sun_position_service.rb
-│           ├── route_analyzer_service.rb
-│           ├── seat_recommendation_service.rb
-│           ├── step_analyzer_service.rb
-│           ├── sun_position_service.rb
-│           └── trip_analyzer_service.rb
+│       ├── services/
+│       │   ├── bearing_calculator.rb
+│       │   ├── google_directions_route_mapper.rb
+│       │   ├── midpoint_calculator.rb
+│       │   ├── polyline_decoder.rb
+│       │   ├── relative_sun_position_service.rb
+│       │   ├── route_analyzer_service.rb
+│       │   ├── route_step_segmenter.rb
+│       │   ├── seat_recommendation_service.rb
+│       │   ├── step_analyzer_service.rb
+│       │   ├── sun_position_service.rb
+│       │   └── trip_analyzer_service.rb
+│       └── validators/
+│           └── recommendation_validator.rb
 │
 ├── examples/
 │   └── web_app/
@@ -507,11 +511,13 @@ Checks:
 ### Unit Tests (`test/unit/`)
 Test calculation services, calculators, and clients independently:
 * `BearingCalculator`
-* `MidpointCalculator`
-* `SunPositionService`
-* `RelativeSunPositionService`
-* `SeatRecommendationService`
+* `GoogleDirectionsRouteMapper`
 * `GoogleMapsClient` (with mocked API calls using WebMock)
+* `MidpointCalculator`
+* `RelativeSunPositionService`
+* `RouteStepSegmenter`
+* `SeatRecommendationService`
+* `SunPositionService`
 
 ### Integration Tests (`examples/web_app/test/`)
 Test Rack integration endpoints and the Admin view HTML rendering:
