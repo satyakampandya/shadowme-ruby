@@ -22,7 +22,11 @@ loader.setup
 
 module ShadowMe
   class << self
-    attr_accessor :loader
+    attr_accessor :loader, :api_key
+
+    def configure
+      yield self
+    end
 
     def eager_load!
       loader&.eager_load

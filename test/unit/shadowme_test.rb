@@ -16,6 +16,20 @@ module ShadowMe
       end
     end
 
+    def test_configure_api_key
+      original_key = ShadowMe.api_key
+
+      ShadowMe.configure do |config|
+        config.api_key = 'my-custom-key'
+      end
+      assert_equal 'my-custom-key', ShadowMe.api_key
+
+      ShadowMe.api_key = 'another-key'
+      assert_equal 'another-key', ShadowMe.api_key
+    ensure
+      ShadowMe.api_key = original_key
+    end
+
     def test_calculate_success
       departure_time = Time.parse('2026-06-10T08:00:00+05:30')
 

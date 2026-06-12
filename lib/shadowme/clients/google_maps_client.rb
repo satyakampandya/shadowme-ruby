@@ -5,7 +5,7 @@ module ShadowMe
   class GoogleMapsClient
     BASE_URL = 'https://maps.googleapis.com'.freeze
 
-    def initialize(api_key: ENV.fetch('GOOGLE_MAPS_API_KEY', nil))
+    def initialize(api_key: ShadowMe.api_key || ENV.fetch('GOOGLE_MAPS_API_KEY', nil))
       @api_key = api_key
     end
 
@@ -30,7 +30,8 @@ module ShadowMe
       return unless @api_key.nil? || @api_key.empty?
 
       raise GoogleApiError,
-            'Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY environment variable.'
+            'Google Maps API key is not configured. Please set GOOGLE_MAPS_API_KEY environment variable ' \
+            'or configure it via ShadowMe.api_key.'
     end
 
     def build_connection

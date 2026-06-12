@@ -28,6 +28,42 @@ bundle install
 
 ---
 
+## 🔧 Configuration
+
+The Google Maps API Key can be configured in multiple ways depending on your project:
+
+### 1. Environment Variable (Ruby & Rails)
+By default, the gem automatically reads from the `GOOGLE_MAPS_API_KEY` environment variable:
+```bash
+export GOOGLE_MAPS_API_KEY="your-google-maps-api-key-here"
+```
+
+### 2. Rails Initializer
+In a Rails application, create an initializer:
+
+**`config/initializers/shadowme.rb`**
+```ruby
+ShadowMe.configure do |config|
+  config.api_key = Rails.application.credentials.dig(:google, :maps_api_key)
+end
+```
+
+### 3. Standalone Ruby Projects
+In a pure Ruby script or non-Rails application, configure the API key globally at load time:
+```ruby
+require 'shadowme'
+
+# Option A: Block configuration
+ShadowMe.configure do |config|
+  config.api_key = 'your-api-key'
+end
+
+# Option B: Direct assignment
+ShadowMe.api_key = 'your-api-key'
+```
+
+---
+
 ## 🚀 Usage
 
 Exposes a clean, public class method entrypoint:

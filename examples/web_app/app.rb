@@ -102,7 +102,8 @@ class App < Roda
 
     # 2. Readiness check endpoint (GET /ready)
     r.get 'ready' do
-      google_api_ok = ENV.fetch('GOOGLE_MAPS_API_KEY', nil) && !ENV['GOOGLE_MAPS_API_KEY'].strip.empty?
+      api_key = ShadowMe.api_key || ENV.fetch('GOOGLE_MAPS_API_KEY', nil)
+      google_api_ok = api_key && !api_key.to_s.strip.empty?
 
       status_code = google_api_ok ? 200 : 503
       response.status = status_code
