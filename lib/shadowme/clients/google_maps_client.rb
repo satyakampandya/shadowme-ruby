@@ -10,11 +10,6 @@ module ShadowMe
     end
 
     # Fetches directions from Google Directions API.
-    # origin: string representing starting point
-    # destination: string representing endpoint
-    # departure_time: optional Time object
-    # Returns the parsed response hash if successful.
-    # Raises GoogleApiError or InvalidRouteError on failure.
     def directions(origin:, destination:, departure_time: nil)
       validate_api_key!
       conn = build_connection

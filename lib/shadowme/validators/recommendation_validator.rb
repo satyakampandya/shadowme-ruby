@@ -11,33 +11,25 @@ module ShadowMe
       optional(:include_steps).maybe(:bool)
     end
 
-    rule(:source) do
-      unless value.match?(/^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/)
-        key.failure('must be in "latitude,longitude" format')
-        next
-      end
-
-      lat, lng = value.split(',').map(&:to_f)
-      key.failure('latitude must be between -90 and 90') if lat < -90.0 || lat > 90.0
-      key.failure('longitude must be between -180 and 180') if lng < -180.0 || lng > 180.0
-    end
-
-    rule(:destination) do
-      unless value.match?(/^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/)
-        key.failure('must be in "latitude,longitude" format')
-        next
-      end
-
-      lat, lng = value.split(',').map(&:to_f)
-      key.failure('latitude must be between -90 and 90') if lat < -90.0 || lat > 90.0
-      key.failure('longitude must be between -180 and 180') if lng < -180.0 || lng > 180.0
-    end
+    rule(:source) { validate_coord(key, value) }
+    rule(:destination) { validate_coord(key, value) }
 
     rule(:departure_time) do
-      # Validate that departure_time is a parsable date/time
       Time.parse(value)
     rescue StandardError
       key.failure('must be a valid ISO 8601 or RFC 2822 datetime format')
+    end
+
+    private
+
+    def validate_coord(key, value)
+      unless value.match?(/^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/)
+        key.failure('must be in "latitude,longitude" format')
+        return
+      end
+      lat, lng = value.split(',').map(&:to_f)
+      key.failure('latitude must be between -90 and 90') if lat < -90.0 || lat > 90.0
+      key.failure('longitude must be between -180 and 180') if lng < -180.0 || lng > 180.0
     end
   end
 end

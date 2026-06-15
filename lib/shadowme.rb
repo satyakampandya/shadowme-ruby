@@ -5,22 +5,18 @@ require 'dry-validation'
 require 'sun_calc'
 require 'time'
 
-require_relative 'shadowme/models'
-require_relative 'shadowme/errors'
-
 # Setup Zeitwerk autoloader for the ShadowMe gem namespace
 loader = Zeitwerk::Loader.for_gem
 loader.inflector.inflect('shadowme' => 'ShadowMe')
 
 # Collapse subdirectories so their contents are namespaced directly under ShadowMe
+# (e.g. ShadowMe::GoogleMapsClient instead of ShadowMe::Clients::GoogleMapsClient)
 loader.collapse("#{__dir__}/shadowme/clients")
+loader.collapse("#{__dir__}/shadowme/errors")
+loader.collapse("#{__dir__}/shadowme/models")
+loader.collapse("#{__dir__}/shadowme/serializers")
 loader.collapse("#{__dir__}/shadowme/services")
 loader.collapse("#{__dir__}/shadowme/validators")
-
-loader.ignore("#{__dir__}/shadowme/models.rb")
-loader.ignore("#{__dir__}/shadowme/models")
-loader.ignore("#{__dir__}/shadowme/errors.rb")
-loader.ignore("#{__dir__}/shadowme/errors")
 
 loader.setup
 
@@ -45,12 +41,11 @@ module ShadowMe
     #
     # Returns: Hash matching the API response structure
     # Raises: ValidationError, InvalidRouteError, GoogleApiError, SunCalculationError
-    # ponytail: return Hash directly from the model
     def calculate(source, destination, departure_time, route_index: nil, include_steps: nil)
       result = validate_input(source, destination, departure_time, route_index, include_steps)
       request = build_trip_request(result)
       recommendation = TripAnalyzerService.new.analyze(request)
-      recommendation.to_hash(include_steps: result[:include_steps] == true)
+      RecommendationSerializer.to_hash(recommendation, include_steps: result[:include_steps] == true)
     end
 
     private
