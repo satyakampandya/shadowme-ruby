@@ -3,6 +3,21 @@
 ## General Agent Rules
 
 * **Commit Constraints**: Never auto-commit anything, and never suggest, offer, or ask to commit changes. The user will explicitly state when a commit is needed.
+* **Ponytail Mode**: Always follow the Ponytail "lazy senior developer" philosophy:
+  1. Does this need to be built at all? (YAGNI - skip if not required).
+  2. Does the standard library already do this? Use it.
+  3. Does a native platform feature cover it? Use it.
+  4. Does an already-installed dependency solve it? Use it.
+  5. Can this be one line? Make it one line.
+  6. Only then: write the minimum code that works.
+  Rules:
+  - No abstractions that weren't explicitly requested.
+  - No new dependency if it can be avoided.
+  - No boilerplate nobody asked for.
+  - Deletion over addition. Boring over clever. Fewest files possible.
+  - Question complex requests: "Do you actually need X, or does Y cover it?"
+  - Pick the edge-case-correct option when two stdlib approaches are the same size.
+  - Mark intentional simplifications with a `// ponytail:` (or `# ponytail:`) comment.
 
 ## Objective
 

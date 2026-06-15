@@ -1,37 +1,21 @@
 module ShadowMe
-  class StepAnalyzerService
-    # Analyzes a single RouteStep.
-    # route_step: RouteStep instance
-    # trip_start_time: Time object representing the departure time
-    # accumulated_duration_seconds: time elapsed in seconds from departure to the start of this step
-    # Returns a Hash containing sun_side, bearing, and midpoint metadata.
+  module StepAnalyzerService
+    # ponytail: simplified step analyzer combining midpoint and bearing logic
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def self.analyze(route_step:, trip_start_time:, accumulated_duration_seconds:)
-      midpoint = calculate_midpoint(route_step, trip_start_time, accumulated_duration_seconds)
-      bearing = calculate_bearing(route_step)
-
-      sun_pos = SunPositionService.calculate(
-        latitude: midpoint[:lat], longitude: midpoint[:lng], datetime: midpoint[:time]
+      lat, lng = MidpointCalculator.calculate(
+        route_step.start_lat, route_step.start_lng, route_step.end_lat, route_step.end_lng
       )
+      time = trip_start_time + accumulated_duration_seconds + (route_step.duration / 2.0)
+      bearing = BearingCalculator.calculate(
+        route_step.start_lat, route_step.start_lng, route_step.end_lat, route_step.end_lng
+      )
+      sun_pos = SunPositionService.calculate(latitude: lat, longitude: lng, datetime: time)
       sun_side = RelativeSunPositionService.calculate(vehicle_bearing: bearing, sun_azimuth: sun_pos.azimuth)
 
-      build_analysis_hash(sun_side, sun_pos, bearing, midpoint)
-    end
-
-    def self.calculate_midpoint(step, trip_start_time, accumulated_seconds)
-      lat, lng = MidpointCalculator.calculate(step.start_lat, step.start_lng, step.end_lat, step.end_lng)
-      time = trip_start_time + accumulated_seconds + (step.duration / 2.0)
-      { lat: lat, lng: lng, time: time }
-    end
-
-    def self.calculate_bearing(step)
-      BearingCalculator.calculate(step.start_lat, step.start_lng, step.end_lat, step.end_lng)
-    end
-
-    def self.build_analysis_hash(sun_side, sun_pos, bearing, midpoint)
       { sun_side: sun_side, sun_position: sun_pos, bearing: bearing,
-        midpoint_lat: midpoint[:lat], midpoint_lng: midpoint[:lng], midpoint_time: midpoint[:time] }
+        midpoint_lat: lat, midpoint_lng: lng, midpoint_time: time }
     end
-
-    private_class_method :calculate_midpoint, :calculate_bearing, :build_analysis_hash
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
   end
 end
