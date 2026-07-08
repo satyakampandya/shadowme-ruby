@@ -15,10 +15,12 @@ The engine parses route geometries from the Google Directions API, calculates ve
 
 ## ⚙️ Installation
 
-To use this gem in your Rails or other Ruby projects, add it to your `Gemfile` pointing to the local directory (or git repository):
+To use this gem in your Rails or other Ruby projects, add it to your `Gemfile`:
 
 ```ruby
-gem 'shadowme-ruby', path: 'path/to/shadowme-ruby'
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+gem 'shadowme-ruby', github: 'satyakampandya/shadowme-ruby'
 ```
 
 And run:

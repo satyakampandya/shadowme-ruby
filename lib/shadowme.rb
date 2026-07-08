@@ -9,6 +9,9 @@ require 'time'
 loader = Zeitwerk::Loader.for_gem
 loader.inflector.inflect('shadowme' => 'ShadowMe')
 
+# Ignore the shadowme-ruby.rb compatibility file in Zeitwerk autoloader
+loader.ignore("#{__dir__}/shadowme-ruby.rb")
+
 # Collapse subdirectories so their contents are namespaced directly under ShadowMe
 # (e.g. ShadowMe::GoogleMapsClient instead of ShadowMe::Clients::GoogleMapsClient)
 loader.collapse("#{__dir__}/shadowme/clients")

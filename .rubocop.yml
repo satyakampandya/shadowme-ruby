@@ -24,3 +24,7 @@ Metrics/BlockLength:
     - 'test/**/*'
     - 'examples/web_app/test/**/*'
     - 'examples/web_app/app.rb'
+
+Naming/FileName:
+  Exclude:
+    - 'lib/shadowme-ruby.rb'
